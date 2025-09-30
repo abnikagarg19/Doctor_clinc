@@ -458,7 +458,7 @@ class _MeetingScreenState extends State<DoctorVideoCall> {
                                   : Container(
                                       color: Colors.black,
                                       child: Center(
-                                          child: Text("Waiting for doctor...",
+                                          child: Text("Waiting for Patient...",
                                               style: GoogleFonts.rubik(
                                                   color: AppTheme
                                                       .whiteBackgroundColor,
