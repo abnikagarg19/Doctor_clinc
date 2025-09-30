@@ -42,7 +42,7 @@ class _PatientChatPageState extends State<PatientChatPage> {
                     border:
                         Border.all(color: Color.fromRGBO(213, 213, 213, 1))),
                 child: ListView.builder(
-                  itemCount: 10,
+                  itemCount: 1,
                   itemBuilder: (context, index) {
                     return Container(
                       padding:
@@ -66,7 +66,7 @@ class _PatientChatPageState extends State<PatientChatPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "Shimov",
+                                "Raj Kumar",
                                 style: GoogleFonts.quicksand(
                                   fontSize: 18,
                                   color: AppTheme.blackColor,
@@ -74,7 +74,7 @@ class _PatientChatPageState extends State<PatientChatPage> {
                                 ),
                               ),
                               Text(
-                                "Lorem ipsum dolor",
+                                "Start the conversation",
                                 style: GoogleFonts.quicksand(
                                   fontSize: 14,
                                   color: AppTheme.blackColor,
@@ -118,7 +118,7 @@ class _PatientChatPageState extends State<PatientChatPage> {
                             child: Icon(Icons.person, color: Colors.black87),
                           ),
                           SizedBox(width: 12),
-                          Text("John Smith",
+                          Text("Raj Kumar",
                               style: TextStyle(
                                 fontSize: 18,
                                 color: Colors.white,
@@ -131,7 +131,7 @@ class _PatientChatPageState extends State<PatientChatPage> {
                 child: ListView.builder(
                   reverse: true,
                   //controller: controller.scrollcontroller,
-                  itemCount: 2,
+                  itemCount: 1,
                   padding: EdgeInsets.zero,
                   physics: const BouncingScrollPhysics(),
                   itemBuilder: (BuildContext context, int index) {
@@ -172,7 +172,7 @@ class _PatientChatPageState extends State<PatientChatPage> {
                                               bottom: 6,
                                             ),
                                             child: Text(
-                                              "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent egestas turpis eu mauris varius, ",
+                                              "Hi My name is Raj ",
                                              style: GoogleFonts.quicksand(
                                             color: Color.fromRGBO(0, 0, 0, 1),
                                             fontSize: 14,fontWeight: FontWeight.w500,
@@ -231,7 +231,7 @@ class _PatientChatPageState extends State<PatientChatPage> {
                                           bottom: 2,
                                         ),
                                         child: Text(
-                                          "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent egestas turpis eu mauris varius, ",
+                                          "Hi Raj welcome ",
                                           style: GoogleFonts.quicksand(
                                             color: Color.fromRGBO(0, 0, 0, 1),
                                             fontSize: 14,fontWeight: FontWeight.w500,

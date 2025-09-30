@@ -309,8 +309,9 @@ class _DashboardState extends State<Dashboard> {
                                                 print(pickedDate);
                                                 String formattedDate =
                                                     DateFormat(
-                                                  'dd/MMM/yyyy',
+                                                  'yyyy-MM-dd',
                                                 ).format(pickedDate);
+                                                controller.changeSelectDate(formattedDate);
                                                 print(formattedDate);
                                               } else {
                                                 print(
@@ -320,7 +321,7 @@ class _DashboardState extends State<Dashboard> {
                                             child: Row(
                                               children: [
                                                 Text(
-                                                  "Today ",
+                                                  "${controller.selectedDate} ",
                                                   style: TextStyle(
                                                       color: Color.fromRGBO(
                                                           142, 142, 142, 1)),

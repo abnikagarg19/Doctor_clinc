@@ -5,11 +5,12 @@ import 'package:chatbot/service/home_repo.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+
 class Doctorcontroller extends GetxController {
   @override
   void onInit() {
     super.onInit();
-   getMeeting();
+    getMeeting();
     // update();
     //print(parameters["pageIndex"]);
   }
@@ -19,7 +20,14 @@ class Doctorcontroller extends GetxController {
     super.dispose();
   }
 
-String selectedDate=DateFormat("yyyy-MM-dd").format(DateTime.now());
+  changeSelectDate(value) {
+    isLoaded = false;
+    selectedDate = value;
+    update();
+    getMeeting();
+  }
+
+  String selectedDate = DateFormat("yyyy-MM-dd").format(DateTime.now());
   List appointmentList = [];
   bool isLoaded = false;
   void getMeeting() async {
@@ -30,9 +38,9 @@ String selectedDate=DateFormat("yyyy-MM-dd").format(DateTime.now());
           isLoaded = true;
           final decodedData = jsonDecode(value.body);
           //if (decodedData["data"].isNotEmpty) {
-            print(decodedData);
-            appointmentList.add(decodedData);
-        //  }
+          print(decodedData);
+          appointmentList.add(decodedData);
+          //  }
 
           update();
           break;
