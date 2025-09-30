@@ -112,6 +112,7 @@ class _MeetingScreenState extends State<DoctorVideoCall> {
         }
       }
       if (message['lifestyle_recommendations'] != null) {
+        lifestyle_recommendations="";
         for (var test in message['lifestyle_recommendations']) {
           lifestyle_recommendations += test;
         }
