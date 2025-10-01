@@ -30,6 +30,10 @@ class AppUrls {
   static const String aaudioFile = "/api/v1/ai/voice_breathing/";
   static const String create_meeting = "/api/v1/meetings/create_user/";
   static const String get_meeting = "/api/v1/dashboard/get_all_meeting";
+  static const String sendMessage = "/api/v1/doctor_chat/sendMessage";
+  static const String contactList = "/api/v1/doctor_chat/doctor/contact_list";
+  static const String chatHistory = "/api/v1/doctor_chat/chat/history";
+
   // Optional: Presigned AWS IoT WebSocket URL for Flutter web MQTT connections
   // Leave empty to use default endpoint (will fail without SigV4)
   static const String AWS_IOT_PRESIGNED_URL = '';

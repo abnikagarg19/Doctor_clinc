@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import '../../components/search_Textbox.dart';
+import '../../controller/chatController.dart';
 import '../../responsive.dart';
 import '../home/dashboard.dart';
 import '../setting/setting.dart';
@@ -36,7 +37,7 @@ class _DashboardState extends State<SideMenu> {
     "assets/svg/logout.svg"
   ];
   int selectedIndex = 0;
-
+  final ChatController controller = Get.put(ChatController());
   _buildWidget(context, width) {
     return LayoutBuilder(
         // If our width is more than 1100 then we consider it a desktop
@@ -63,6 +64,9 @@ class _DashboardState extends State<SideMenu> {
                         onTap: () {
                           selectedIndex = index;
                           setState(() {});
+                          if(index==1){
+                            controller.loadPatients();
+                          }
                         },
                         child: Container(
                           padding: EdgeInsets.all(4),

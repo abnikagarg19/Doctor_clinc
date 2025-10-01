@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import '../../controller/DoctorController.dart';
+import '../../controller/chatController.dart';
 import '../../service/shared_pref.dart';
 import '../../theme/apptheme.dart';
 import 'package:intl/intl.dart';
@@ -311,7 +312,8 @@ class _DashboardState extends State<Dashboard> {
                                                     DateFormat(
                                                   'yyyy-MM-dd',
                                                 ).format(pickedDate);
-                                                controller.changeSelectDate(formattedDate);
+                                                controller.changeSelectDate(
+                                                    formattedDate);
                                                 print(formattedDate);
                                               } else {
                                                 print(
@@ -340,7 +342,7 @@ class _DashboardState extends State<Dashboard> {
                                     color: Color.fromRGBO(226, 226, 227, 1),
                                   ),
                                   if (controller
-                                          .appointmentList[0]["meeting"].isNotEmpty)
+                                      .appointmentList[0]["meeting"].isNotEmpty)
                                     ListView.builder(
                                       shrinkWrap: true,
                                       itemCount: controller
@@ -439,9 +441,11 @@ class _DashboardState extends State<Dashboard> {
                                   else
                                     Expanded(
                                       child: Center(
-                                        child: Text("Verification may take 24–48 hrs to display patients.",
+                                        child: Text(
+                                            "Verification may take 24–48 hrs to display patients.",
                                             style: GoogleFonts.rubik(
-                                              color: AppTheme.lightHintTextColor,
+                                              color:
+                                                  AppTheme.lightHintTextColor,
                                               fontSize:
                                                   Constant.smallbody(context),
                                               fontWeight: FontWeight.w500,
@@ -505,8 +509,8 @@ class _DashboardState extends State<Dashboard> {
                                 GestureDetector(
                                   onTap: () {
                                     Get.to(DoctorVideoCall(
-                                     
-                                          meetingId: "kv3f-g63t-55fx", token: token));
+                                        meetingId: "kv3f-g63t-55fx",
+                                        token: token));
                                   },
                                   child: Container(
                                     decoration: BoxDecoration(
