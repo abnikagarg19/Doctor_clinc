@@ -81,6 +81,19 @@ class ChatController extends GetxController {
     super.onClose();
   }
 
+  RxBool sendButton = false.obs;
+  void changeStatus(value) {
+    // if(!mounted)
+    Future.delayed(Duration.zero, () async {
+      if (value == "") {
+        sendButton.value = false;
+      } else {
+        sendButton.value = true;
+      }
+      update();
+    });
+  }
+
   /// Fetch chat history with a patient
   Future<void> loadChatHistory(String patientId, isloaded2) async {
     if (isloaded2) {

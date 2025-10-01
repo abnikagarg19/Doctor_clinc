@@ -152,7 +152,8 @@ class _PatientChatPageState extends State<PatientChatPage> {
                                     )
                                   : ListView.builder(
                                       // reverse: true,
-                                        controller: controller.scrollController, // 👈 attach controller
+                                      controller: controller
+                                          .scrollController, // 👈 attach controller
                                       //controller: controller.scrollcontroller,
                                       itemCount: controller.messages.length,
                                       padding: EdgeInsets.zero,
@@ -334,6 +335,17 @@ class _PatientChatPageState extends State<PatientChatPage> {
                                   Expanded(
                                     child: TextField(
                                       controller: controller.chatcontroller,
+                                      onChanged: (value) {
+                                        controller.changeStatus(
+                                          value,
+                                        );
+                                      },
+                                      onSubmitted: (value) {
+                                        if (controller.sendButton.value) {
+                                          controller.sendMessage();
+                                          controller.chatcontroller.clear();
+                                        }
+                                      },
                                       decoration: InputDecoration(
                                         hintText: "Type a message",
                                         border: OutlineInputBorder(
@@ -353,10 +365,20 @@ class _PatientChatPageState extends State<PatientChatPage> {
                                   const SizedBox(width: 8),
                                   GestureDetector(
                                     onTap: () {
-                                      controller.sendMessage();
+                                      if (controller.sendButton.value) {
+                                        controller.sendMessage();
+                                      }
                                     },
                                     child: CircleAvatar(
-                                      backgroundColor: Colors.blue.shade600,
+                                      backgroundColor:
+                                          controller.sendButton.value
+                                              ? Colors.blue
+                                              : Color.fromRGBO(
+                                                  148,
+                                                  148,
+                                                  148,
+                                                  1,
+                                                ),
                                       child: const Icon(Icons.send,
                                           color: Colors.white),
                                     ),
