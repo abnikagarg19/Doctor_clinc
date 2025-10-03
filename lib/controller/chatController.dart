@@ -44,23 +44,23 @@ class ChatController extends GetxController {
 
   initWebsocket() {
     // connect with token
-    _ws = ChatWebSocketService(
-      url: "ws://api.carepal.in:8000/api/v1/doctor_chat/ws",
-      token: PreferenceUtils.getUserToken(),
-    );
+    // _ws = ChatWebSocketService(
+    //   url: "ws://api.carepal.in:8000/api/v1/doctor_chat/ws",
+    //   token: PreferenceUtils.getUserToken(),
+    // );
 
-    _ws.messageStream.listen((msg) {
-      // Assuming msg is already a Map
-      final formattedMessage = {
-        "message_content": msg['message'],
-        "id": DateTime.now().millisecondsSinceEpoch, // generate unique id
-        "sender_id": msg['from'],
-        "sent_at": DateTime.now().toUtc().toIso8601String(),
-        "sender_type": "patient", // or determinRRe based on sender_id
-        "recipient_id": msg['to'],
-      };
-      messages.add(formattedMessage);
-    });
+    // _ws.messageStream.listen((msg) {
+    //   // Assuming msg is already a Map
+    //   final formattedMessage = {
+    //     "message_content": msg['message'],
+    //     "id": DateTime.now().millisecondsSinceEpoch, // generate unique id
+    //     "sender_id": msg['from'],
+    //     "sent_at": DateTime.now().toUtc().toIso8601String(),
+    //     "sender_type": "patient", // or determinRRe based on sender_id
+    //     "recipient_id": msg['to'],
+    //   };
+    //   messages.add(formattedMessage);
+    // });
   }
 
   // void sendInitMessage(String from, String to, String message) {
