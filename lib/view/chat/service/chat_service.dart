@@ -29,7 +29,7 @@ class ChatWebSocketService {
     _socket = WebSocket(uri.toString());
 
     _socket.onOpen.listen((event) {
-      print("WebSocket connected ✅");
+      print("chatservice connected ✅");
     });
 
     _socket.onClose.listen((event) {

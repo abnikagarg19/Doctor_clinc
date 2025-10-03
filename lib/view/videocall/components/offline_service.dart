@@ -30,15 +30,8 @@ class OfflineService {
     _socket = WebSocket(uri.toString());
 
     _socket.onOpen.listen((event) {
-      print("✅ WebSocket connected");
-
-      // send init once connectedRR
-      send({
-        "event": "init",
-        "user_id": "22",
-        "doctor_language": "en",
-        "patient_language": "en",
-      });
+      print("Offline connected ✅");
+      print("ReadyState: ${_socket.readyState}");
     });
 
     _socket.onClose.listen((event) {
@@ -94,7 +87,8 @@ class OfflineService {
     final chunkSize = framesPerChunk * channels * bytesPerSample;
 
     for (var i = 0; i < data.length; i += chunkSize) {
-      final chunk = data.sublist(i, i + chunkSize > data.length ? data.length : i + chunkSize);
+      final chunk = data.sublist(
+          i, i + chunkSize > data.length ? data.length : i + chunkSize);
       final payload = base64Encode(chunk);
 
       send({

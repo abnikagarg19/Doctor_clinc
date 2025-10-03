@@ -56,7 +56,7 @@ class ChatController extends GetxController {
         "id": DateTime.now().millisecondsSinceEpoch, // generate unique id
         "sender_id": msg['from'],
         "sent_at": DateTime.now().toUtc().toIso8601String(),
-        "sender_type": "patient", // or determine based on sender_id
+        "sender_type": "patient", // or determinRRe based on sender_id
         "recipient_id": msg['to'],
       };
       messages.add(formattedMessage);

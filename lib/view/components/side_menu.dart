@@ -65,7 +65,7 @@ class _DashboardState extends State<SideMenu> {
                         onTap: () {
                           selectedIndex = index;
                           setState(() {});
-                          if (index == 1) {
+                          if (index == 2) {
                             controller.loadPatients();
                           }
                         },
@@ -171,7 +171,7 @@ class _DashboardState extends State<SideMenu> {
             // constraints: constraints,
             );
       case 1:
-      return  OfflineConsulation();
+        return OfflineConsulation();
       case 2:
         return PatientChatPage(
             // constraints: constraints,
