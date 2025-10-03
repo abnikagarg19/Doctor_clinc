@@ -7,6 +7,7 @@ import '../../controller/chatController.dart';
 import '../../responsive.dart';
 import '../home/dashboard.dart';
 import '../setting/setting.dart';
+import '../videocall/offline_consulation.dart';
 
 class SideMenu extends StatefulWidget {
   SideMenu({super.key});
@@ -31,7 +32,7 @@ class _DashboardState extends State<SideMenu> {
 
   List dashboardlist = [
     "assets/svg/dashboard.svg",
-   // "assets/svg/calender.svg",
+    "assets/svg/calender.svg",
     "assets/svg/chat.svg",
     "assets/svg/setting.svg",
     "assets/svg/logout.svg"
@@ -64,17 +65,21 @@ class _DashboardState extends State<SideMenu> {
                         onTap: () {
                           selectedIndex = index;
                           setState(() {});
-                          if(index==1){
+                          if (index == 1) {
                             controller.loadPatients();
                           }
                         },
                         child: Container(
-                          padding: EdgeInsets.all(4),
+                            padding: EdgeInsets.all(4),
                             decoration: BoxDecoration(
                                 color: index == selectedIndex
                                     ? Color.fromRGBO(255, 255, 255, 0.7)
-                                    : Colors.transparent, borderRadius: BorderRadius.circular(4)),
-                            child: SvgPicture.asset(dashboardlist[index], height: 30,)));
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(4)),
+                            child: SvgPicture.asset(
+                              dashboardlist[index],
+                              height: 30,
+                            )));
                   },
                 ),
                 SizedBox(
@@ -166,10 +171,12 @@ class _DashboardState extends State<SideMenu> {
             // constraints: constraints,
             );
       case 1:
+      return  OfflineConsulation();
+      case 2:
         return PatientChatPage(
             // constraints: constraints,
             );
-      case 2:
+      case 3:
         return SettingsPage(
             // constraints: constraints,
             );

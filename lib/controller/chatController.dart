@@ -131,7 +131,8 @@ class ChatController extends GetxController {
       final response = await _chatService.apiSendMessage(
           selectedPatient.value!["user_id"], chatcontroller.text);
       if (response.statusCode == 200) {
-        chatcontroller.clear(); sendButton.value = false;
+        chatcontroller.clear();
+        sendButton.value = false;
         final decoded = jsonDecode(response.body);
         // Add message to local list (optimistic update)
         // messages.add({

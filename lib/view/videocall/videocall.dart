@@ -20,6 +20,7 @@ import 'dart:convert';
 import 'dart:html' as html;
 
 import '../../components/multiline_textbox.dart' show InputTextFieldMaxlines;
+import '../../service/shared_pref.dart';
 import '../../theme/apptheme.dart';
 import 'components/web_cosket.dart';
 
@@ -48,7 +49,10 @@ class _MeetingScreenState extends State<DoctorVideoCall> {
   late ChatWebSocketService chatService;
   final List<String> messages = [];
   String patientSummary = "";
+  String doctor_suggestions = "";
   String lifestyle_recommendations = "";
+  String advicePlan = "";
+  String doctorImpression = "";
   @override
   void initState() {
     super.initState();
@@ -77,7 +81,7 @@ class _MeetingScreenState extends State<DoctorVideoCall> {
     // 👇 initialize your service here
     chatService = ChatWebSocketService(
       url: "wss://api.carepal.in/api/v1/appointment/session/stream",
-      token: 'Bearer $token', // replace with real token
+      token: PreferenceUtils.getUserToken(),
     );
 // Listen to the message stream
     chatService.messageStream.listen((message) {
@@ -97,7 +101,7 @@ class _MeetingScreenState extends State<DoctorVideoCall> {
 
       // 2️⃣ Extract patient_summary
       patientSummary = message['patient_summary'] ?? "";
-
+      doctor_suggestions = message['doctor_suggestions'] ?? "";
       if (message['medicines_prescribed'] != null) {
         medicines.clear();
         for (var med in message['medicines_prescribed']) {
@@ -112,7 +116,7 @@ class _MeetingScreenState extends State<DoctorVideoCall> {
         }
       }
       if (message['lifestyle_recommendations'] != null) {
-        lifestyle_recommendations="";
+        lifestyle_recommendations = "";
         for (var test in message['lifestyle_recommendations']) {
           lifestyle_recommendations += test;
         }
@@ -236,7 +240,7 @@ class _MeetingScreenState extends State<DoctorVideoCall> {
       final type = data.type; // correct
       final text = data.text; // correct
       final participantName = data.participantName; // correct
-
+      print("text: $participantName said: $text");
       if (type == "fullSentence" && text != null && participantName != null) {
         print("FINAL: $participantName said: $text");
 
@@ -387,7 +391,7 @@ class _MeetingScreenState extends State<DoctorVideoCall> {
               child: Row(children: [
                 // Video Call Section
                 Expanded(
-                  flex: 7,
+                  flex: 5,
                   child: Column(
                     children: [
                       Expanded(
@@ -710,169 +714,348 @@ class _MeetingScreenState extends State<DoctorVideoCall> {
                     ],
                   ),
                 ),
-
-                if (constraints.maxHeight < constraints.maxWidth)
-                  const SizedBox(width: 20),
-                if (constraints.maxHeight < constraints.maxWidth)
-                  Expanded(
-                    flex: 5,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text("Patient Summary",
-                            style: GoogleFonts.rubik(
-                                color: Color.fromRGBO(54, 100, 188, 1),
-                                fontSize: Constant.subHeading(context),
-                                fontWeight: FontWeight.w700)),
-                        SizedBox(
-                          height: 20,
-                        ),
-                        Row(
-                          children: List.generate(
-                            tabsLIst.length,
-                            (index) {
-                              return Expanded(
-                                child: GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      selectTabs = index;
-                                    });
-                                  },
-                                  child: Container(
-                                    padding: EdgeInsets.symmetric(vertical: 8),
-                                    decoration: BoxDecoration(
-                                        color: selectTabs == index
-                                            ? Color.fromRGBO(60, 150, 255, 1)
-                                            : AppTheme.whiteTextColor,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: const Color.fromARGB(
-                                                132, 149, 147, 147),
-                                            spreadRadius: 1,
-                                            offset: const Offset(0, 6),
-                                            blurRadius: 10,
-                                          )
+                Expanded(
+                  flex: 7,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          children: [
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  if (constraints.maxHeight <
+                                      constraints.maxWidth)
+                                    const SizedBox(width: 20),
+                                  Expanded(
+                                    child: Container(
+                                      width: double.infinity,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(22),
+                                      ),
+                                      child: Column(
+                                        children: [
+                                          SizedBox(
+                                            height: 40,
+                                          ),
+                                          Image.asset(
+                                            "assets/images/aicon.png",
+                                            width: 120,
+                                          ),
+                                          SizedBox(
+                                            height: 40,
+                                          ),
+                                          Text("$doctor_suggestions",
+                                              style: GoogleFonts.rubik(
+                                                  color: Color.fromRGBO(
+                                                      12, 12, 12, 1),
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w400)),
                                         ],
-                                        borderRadius: BorderRadius.only(
-                                          topLeft: Radius.circular(12),
-                                          topRight: Radius.circular(12),
-                                        )),
-                                    child: Center(
-                                      child: Text("${tabsLIst[index]}",
-                                          style: GoogleFonts.rubik(
-                                              color: selectTabs == index
-                                                  ? Color.fromRGBO(
-                                                      255, 255, 255, 1)
-                                                  : Color.fromRGBO(
-                                                      142, 142, 142, 1),
-                                              fontSize: Constant.verysmallbody(
-                                                  context),
-                                              fontWeight: FontWeight.w500)),
+                                      ),
+                                    ),
+                                  ),
+                                  if (constraints.maxHeight <
+                                      constraints.maxWidth)
+                                    const SizedBox(width: 20),
+                                  if (constraints.maxHeight <
+                                      constraints.maxWidth)
+                                    Expanded(
+                                      flex: 4,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: List.generate(
+                                              tabsLIst.length,
+                                              (index) {
+                                                return Expanded(
+                                                  child: GestureDetector(
+                                                    onTap: () {
+                                                      setState(() {
+                                                        selectTabs = index;
+                                                      });
+                                                    },
+                                                    child: Container(
+                                                      padding:
+                                                          EdgeInsets.symmetric(
+                                                              vertical: 8),
+                                                      decoration: BoxDecoration(
+                                                          color: selectTabs ==
+                                                                  index
+                                                              ? Color.fromRGBO(
+                                                                  60,
+                                                                  150,
+                                                                  255,
+                                                                  1)
+                                                              : AppTheme
+                                                                  .whiteTextColor,
+                                                          boxShadow: [
+                                                            BoxShadow(
+                                                              color: const Color
+                                                                  .fromARGB(
+                                                                  132,
+                                                                  149,
+                                                                  147,
+                                                                  147),
+                                                              spreadRadius: 1,
+                                                              offset:
+                                                                  const Offset(
+                                                                      0, 6),
+                                                              blurRadius: 10,
+                                                            )
+                                                          ],
+                                                          borderRadius:
+                                                              BorderRadius.only(
+                                                            topLeft:
+                                                                Radius.circular(
+                                                                    12),
+                                                            topRight:
+                                                                Radius.circular(
+                                                                    12),
+                                                          )),
+                                                      child: Center(
+                                                        child: Text(
+                                                            "${tabsLIst[index]}",
+                                                            style: GoogleFonts.rubik(
+                                                                color: selectTabs ==
+                                                                        index
+                                                                    ? Color.fromRGBO(
+                                                                        255,
+                                                                        255,
+                                                                        255,
+                                                                        1)
+                                                                    : Color.fromRGBO(
+                                                                        142,
+                                                                        142,
+                                                                        142,
+                                                                        1),
+                                                                fontSize:
+                                                                    Constant.verysmallbody(
+                                                                        context),
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w500)),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                          SizedBox(
+                                            height: 1,
+                                          ),
+                                          Expanded(
+                                            child: Container(
+                                                padding: EdgeInsets.symmetric(
+                                                    horizontal: 20,
+                                                    vertical: 30),
+                                                decoration: BoxDecoration(
+                                                  color: const Color.fromRGBO(
+                                                      255, 255, 255, 1),
+                                                ),
+                                                child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.start,
+                                                    children: [
+                                                      Row(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .start,
+                                                        children: [
+                                                          Expanded(
+                                                            child: Column(
+                                                              crossAxisAlignment:
+                                                                  CrossAxisAlignment
+                                                                      .start,
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .start,
+                                                              children: [
+                                                                Text("Patient:",
+                                                                    style: GoogleFonts.rubik(
+                                                                        color: AppTheme
+                                                                            .blackColor,
+                                                                        fontSize:
+                                                                            Constant.twetysixtext(
+                                                                                context),
+                                                                        fontWeight:
+                                                                            FontWeight.w700)),
+                                                                SizedBox(
+                                                                  height: 20,
+                                                                ),
+                                                                Text(
+                                                                    patientSummary,
+                                                                    style: GoogleFonts.quicksand(
+                                                                        color: AppTheme
+                                                                            .blackColor,
+                                                                        fontSize:
+                                                                            12,
+                                                                        fontWeight:
+                                                                            FontWeight.w500)),
+                                                                SizedBox(
+                                                                  height: 20,
+                                                                ),
+                                                                SizedBox(
+                                                                  height: 20,
+                                                                ),
+                                                                Text(
+                                                                    "Description:",
+                                                                    style: GoogleFonts.rubik(
+                                                                        color: AppTheme
+                                                                            .blackColor,
+                                                                        fontSize:
+                                                                            Constant.smallbody(
+                                                                                context),
+                                                                        fontWeight:
+                                                                            FontWeight.w700)),
+                                                                SizedBox(
+                                                                  height: 10,
+                                                                ),
+                                                                Text(
+                                                                    lifestyle_recommendations,
+                                                                    style: GoogleFonts.quicksand(
+                                                                        color: AppTheme
+                                                                            .blackColor,
+                                                                        fontSize:
+                                                                            12,
+                                                                        fontWeight:
+                                                                            FontWeight.w500)),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                          SizedBox(
+                                                            width: 80,
+                                                          ),
+                                                          Image.asset(
+                                                              "assets/images/full_body.png")
+                                                        ],
+                                                      ),
+                                                      // Row(
+                                                      //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                      //   children: [
+                                                      //     _infoButton(
+                                                      //         "Patient Vitals", selectedTab == "vitals", () {
+                                                      //       setState(() => selectedTab = "vitals");
+                                                      //     }),
+                                                      //     _infoButton(
+                                                      //         "Patient Summary", selectedTab == "summary",
+                                                      //         () {
+                                                      //       setState(() => selectedTab = "summary");
+                                                      //     }),
+                                                      //   ],
+                                                      // ),
+                                                      // const SizedBox(height: 20),
+                                                      // Expanded(
+                                                      //     child: selectedTab == "vitals"
+                                                      //         ? PatientVitalsWidget(height, width)
+                                                      //         : PatientSummaryWidget(height, width))
+                                                    ])),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(
+                              height: 10,
+                            ),
+                            Row(
+                              children: [
+                                SizedBox(
+                                  width: 20,
+                                ),
+                                Expanded(
+                                  child: Container(
+                                    padding:
+                                        EdgeInsets.symmetric(horizontal: 12),
+                                    decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius:
+                                            BorderRadius.circular(12)),
+                                    height:
+                                        200, // fixed height to enable scrolling
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        SizedBox(
+                                          height: 10,
+                                        ),
+                                        Text("Doctor impression and diagnoses",
+                                            style: GoogleFonts.rubik(
+                                                color:
+                                                    Color.fromRGBO(0, 0, 0, 1),
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w700)),
+                                        SizedBox(
+                                          height: 20,
+                                        ),
+                                        Expanded(child: Container()),
+                                      ],
                                     ),
                                   ),
                                 ),
-                              );
-                            },
-                          ),
-                        ),
-                        SizedBox(
-                          height: 1,
-                        ),
-                        Container(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 30),
-                            decoration: BoxDecoration(
-                              color: const Color.fromRGBO(255, 255, 255, 1),
-                            ),
-                            child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: [
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.start,
-                                          children: [
-                                            Text("Patient:",
-                                                style: GoogleFonts.rubik(
-                                                    color: AppTheme.blackColor,
-                                                    fontSize:
-                                                        Constant.twetysixtext(
-                                                            context),
-                                                    fontWeight:
-                                                        FontWeight.w700)),
-                                            SizedBox(
-                                              height: 20,
-                                            ),
-                                            Text(patientSummary,
-                                                style: GoogleFonts.quicksand(
-                                                    color: AppTheme.blackColor,
-                                                    fontSize: 12,
-                                                    fontWeight:
-                                                        FontWeight.w500)),
-                                            SizedBox(
-                                              height: 20,
-                                            ),
-                                            SizedBox(
-                                              height: 20,
-                                            ),
-                                            Text("Description:",
-                                                style: GoogleFonts.rubik(
-                                                    color: AppTheme.blackColor,
-                                                    fontSize:
-                                                        Constant.smallbody(
-                                                            context),
-                                                    fontWeight:
-                                                        FontWeight.w700)),
-                                            SizedBox(
-                                              height: 10,
-                                            ),
-                                            Text(lifestyle_recommendations,
-                                                style: GoogleFonts.quicksand(
-                                                    color: AppTheme.blackColor,
-                                                    fontSize: 12,
-                                                    fontWeight:
-                                                        FontWeight.w500)),
-                                          ],
+                                SizedBox(
+                                  width: 20,
+                                ),
+                                Expanded(
+                                  child: Container(
+                                    padding:
+                                        EdgeInsets.symmetric(horizontal: 12),
+                                    decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius:
+                                            BorderRadius.circular(12)),
+                                    height:
+                                        200, // fixed height to enable scrolling
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        SizedBox(
+                                          height: 10,
                                         ),
-                                      ),
-                                      SizedBox(
-                                        width: 80,
-                                      ),
-                                      Image.asset("assets/images/full_body.png")
-                                    ],
+                                        Text("Advice and plan",
+                                            style: GoogleFonts.rubik(
+                                                color:
+                                                    Color.fromRGBO(0, 0, 0, 1),
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w700)),
+                                        SizedBox(
+                                          height: 20,
+                                        ),
+                                        Expanded(
+                                          child: Text(
+                                              "$lifestyle_recommendations",
+                                              style: GoogleFonts.rubik(
+                                                  color: Color.fromRGBO(
+                                                      0, 0, 0, 1),
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w400)),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                  // Row(
-                                  //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                  //   children: [
-                                  //     _infoButton(
-                                  //         "Patient Vitals", selectedTab == "vitals", () {
-                                  //       setState(() => selectedTab = "vitals");
-                                  //     }),
-                                  //     _infoButton(
-                                  //         "Patient Summary", selectedTab == "summary",
-                                  //         () {
-                                  //       setState(() => selectedTab = "summary");
-                                  //     }),
-                                  //   ],
-                                  // ),
-                                  // const SizedBox(height: 20),
-                                  // Expanded(
-                                  //     child: selectedTab == "vitals"
-                                  //         ? PatientVitalsWidget(height, width)
-                                  //         : PatientSummaryWidget(height, width))
-                                ])),
-                      ],
-                    ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      )
+                    ],
                   ),
-                //  ],
+                )
               ]),
             );
           }),
