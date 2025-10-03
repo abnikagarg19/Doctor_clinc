@@ -53,6 +53,7 @@ class _MeetingScreenState extends State<DoctorVideoCall> {
   String lifestyle_recommendations = "";
   String advicePlan = "";
   String doctorImpression = "";
+  String doctor_impression_and_diagnosis="";
   @override
   void initState() {
     super.initState();
@@ -121,6 +122,14 @@ class _MeetingScreenState extends State<DoctorVideoCall> {
           lifestyle_recommendations += test;
         }
       }
+      if (message['doctor_impression_and_diagnosis'] != null) {
+         doctor_impression_and_diagnosis = message['doctor_impression_and_diagnosis']["impression"]+","+ message['doctor_impression_and_diagnosis']["diagnosis"];
+        // doctor_impression_and_diagnosis = "";
+        // for (var test in message['doctor_impression_and_diagnosis']) {
+        //   doctor_impression_and_diagnosis += test;
+        // }
+      }
+      
 
       // 👇 You can now use these variables as needed
       print("Patient Summary: $patientSummary");
@@ -241,7 +250,7 @@ class _MeetingScreenState extends State<DoctorVideoCall> {
       final text = data.text; // correct
       final participantName = data.participantName; // correct
       print("text: $participantName said: $text");
-      if (type == "fullSentence" && text != null && participantName != null) {
+      if (type == "fullSentence" && text != null ) {
         print("FINAL: $participantName said: $text");
 
         // Forward to WebSocket chat
@@ -727,32 +736,37 @@ class _MeetingScreenState extends State<DoctorVideoCall> {
                                   if (constraints.maxHeight <
                                       constraints.maxWidth)
                                     const SizedBox(width: 20),
-                                  Expanded(
+                                  Expanded(flex: 4,
                                     child: Container(
                                       width: double.infinity,
                                       decoration: BoxDecoration(
                                         color: Colors.white,
                                         borderRadius: BorderRadius.circular(22),
                                       ),
-                                      child: Column(
-                                        children: [
-                                          SizedBox(
-                                            height: 40,
-                                          ),
-                                          Image.asset(
-                                            "assets/images/aicon.png",
-                                            width: 120,
-                                          ),
-                                          SizedBox(
-                                            height: 40,
-                                          ),
-                                          Text("$doctor_suggestions",
-                                              style: GoogleFonts.rubik(
-                                                  color: Color.fromRGBO(
-                                                      12, 12, 12, 1),
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.w400)),
-                                        ],
+                                      padding: EdgeInsets.symmetric(horizontal: 12),
+                                      child: SingleChildScrollView(
+                                        child: Column(
+                                          children: [
+                                            SizedBox(
+                                              height: 40,
+                                            ),
+                                            Image.asset(
+                                              "assets/images/aicon.png",
+                                              width: 120,
+                                            ),
+                                            SizedBox(
+                                              height: 40,
+                                            ),
+                                            Text("$doctor_suggestions",
+                                                style: GoogleFonts.rubik(
+                                                    color: Color.fromRGBO(
+                                                        12, 12, 12, 1),
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w400)),SizedBox(
+                                              height: 40,
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -762,7 +776,7 @@ class _MeetingScreenState extends State<DoctorVideoCall> {
                                   if (constraints.maxHeight <
                                       constraints.maxWidth)
                                     Expanded(
-                                      flex: 4,
+                                      flex: 8,
                                       child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
@@ -1001,7 +1015,7 @@ class _MeetingScreenState extends State<DoctorVideoCall> {
                                         SizedBox(
                                           height: 20,
                                         ),
-                                        Expanded(child: Container()),
+                                        Expanded(child: Container(child: Text(doctor_impression_and_diagnosis),)),
                                       ],
                                     ),
                                   ),
