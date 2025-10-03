@@ -58,7 +58,7 @@ class _MyHomePageState extends State<OfflineConsulation> {
     // ws.messageStream.listen((msg) {
     //   print("📥 Stream message: $msg");
     // });
-    _setupVadHandler();
+  //  _setupVadHandler();
   }
 
   List chatList = [];

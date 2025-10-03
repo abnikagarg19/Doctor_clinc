@@ -35,7 +35,8 @@ class OfflineService {
     });
 
     _socket.onClose.listen((event) {
-      print("❌ WebSocket closed, retrying...");
+       print("❌ Closed with code: ${event.code}, reason: ${event.reason}");
+
       _reconnect();
     });
 
