@@ -1,7 +1,9 @@
+import 'package:chatbot/utils/app_routes.dart';
 import 'package:chatbot/view/chat/chat_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
+
 import '../../components/search_Textbox.dart';
 import '../../controller/chatController.dart';
 import '../../responsive.dart';
@@ -162,24 +164,262 @@ class _DashboardState extends State<SideMenu> {
   }
 
   _buildSwitchPage(context, selectIndex) {
-    if (selectIndex == 3) {
+    if (selectIndex == 4) {
+      Future.microtask(() => _showLogoutDialog(context));
       return Container();
     }
+
     switch (selectIndex) {
       case 0:
-        return Dashboard(
-            // constraints: constraints,
-            );
+        return Dashboard();
       case 1:
         return OfflineConsulation();
       case 2:
-        return PatientChatPage(
-            // constraints: constraints,
-            );
+        return PatientChatPage();
       case 3:
-        return SettingsPage(
-            // constraints: constraints,
-            );
+        return SettingsPage();
+      default:
+        return Dashboard();
     }
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    final bool isMobile = ResponsiveLayout.isSmallScreen(context);
+    final bool isTablet = ResponsiveLayout.isMediumScreen(context);
+    final bool isWeb = ResponsiveLayout.isLargeScreen(context);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          child: Container(
+            constraints: BoxConstraints(
+              maxWidth:
+                  isMobile ? MediaQuery.of(context).size.width * 0.9 : 450,
+              minWidth:
+                  isMobile ? MediaQuery.of(context).size.width * 0.8 : 400,
+            ),
+            padding: EdgeInsets.all(isMobile ? 20 : 24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 10,
+                  offset: Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icon
+                Container(
+                  width: isMobile ? 56 : 64,
+                  height: isMobile ? 56 : 64,
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.logout,
+                    color: Colors.red,
+                    size: isMobile ? 28 : 32,
+                  ),
+                ),
+                SizedBox(height: isMobile ? 12 : 16),
+
+                // Title
+                Text(
+                  "Logout",
+                  style: TextStyle(
+                    fontSize: isMobile ? 18 : 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[800],
+                  ),
+                ),
+                SizedBox(height: isMobile ? 6 : 8),
+
+                // Message
+                Text(
+                  "Are you sure you want to logout from your account?",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: isMobile ? 14 : 16,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                SizedBox(height: isMobile ? 20 : 24),
+
+                // Buttons - Horizontal for web/tablet, Vertical for mobile
+                if (isMobile)
+                  ..._buildMobileButtons(context)
+                else
+                  ..._buildDesktopButtons(context),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  List<Widget> _buildMobileButtons(BuildContext context) {
+    return [
+      Column(
+        children: [
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _performLogout();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(
+                "Logout",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Future.microtask(() {
+                  if (mounted) {
+                    setState(() {
+                      selectedIndex = 0;
+                    });
+                  }
+                });
+              },
+              style: OutlinedButton.styleFrom(
+                padding: EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                side: BorderSide(color: Colors.grey[300]!),
+              ),
+              child: Text(
+                "Cancel",
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ];
+  }
+
+  List<Widget> _buildDesktopButtons(BuildContext context) {
+    return [
+      Row(
+        children: [
+          Expanded(
+            child: OutlinedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Future.microtask(() {
+                  if (mounted) {
+                    setState(() {
+                      selectedIndex = 0;
+                    });
+                  }
+                });
+              },
+              style: OutlinedButton.styleFrom(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                side: BorderSide(color: Colors.grey[300]!),
+              ),
+              child: Text(
+                "Cancel",
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _performLogout();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(
+                "Logout",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ];
+  }
+
+  void _performLogout() {
+    // Perform logout operations
+    print("Logging out...");
+
+    // Show success message
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Logged out successfully"),
+        backgroundColor: Colors.green,
+        duration: Duration(seconds: 2),
+      ),
+    );
+
+    // Reset to dashboard without setState during build
+    Future.microtask(() {
+      if (mounted) {
+        setState(() {
+          selectedIndex = 0;
+        });
+      }
+    });
+
+    // Or navigate to login screen:
+    Get.offAllNamed(Routes.LOGIN);
   }
 }

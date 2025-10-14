@@ -2,12 +2,12 @@ import 'package:chatbot/view/videocall/videocall.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
+
 import '../../controller/DoctorController.dart';
-import '../../controller/chatController.dart';
 import '../../service/shared_pref.dart';
 import '../../theme/apptheme.dart';
-import 'package:intl/intl.dart';
 import '../../utils/constant.dart';
 import '../../videocall/api.dart';
 import '../../videocall/meeting_screen.dart';
