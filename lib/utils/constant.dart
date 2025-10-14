@@ -79,8 +79,6 @@ class Constant {
         : 28;
   }
 
-
-
   static double twetysixtext(BuildContext context) {
     return ResponsiveLayout.isSmallScreen(context) ||
             ResponsiveLayout.isMediumScreen(context)
@@ -108,7 +106,8 @@ class Constant {
         ? 44
         : 48;
   }
-   static double sixtyeight(BuildContext context) {
+
+  static double sixtyeight(BuildContext context) {
     return ResponsiveLayout.isSmallScreen(context) ||
             ResponsiveLayout.isMediumScreen(context)
         ? 40

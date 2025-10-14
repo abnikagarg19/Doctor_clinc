@@ -173,7 +173,8 @@ class _DashboardState extends State<SideMenu> {
       case 0:
         return Dashboard();
       case 1:
-        return OfflineConsulation();
+        return OfflineConsultation();
+
       case 2:
         return PatientChatPage();
       case 3:
@@ -398,10 +399,8 @@ class _DashboardState extends State<SideMenu> {
   }
 
   void _performLogout() {
-    // Perform logout operations
     print("Logging out...");
 
-    // Show success message
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text("Logged out successfully"),
@@ -409,8 +408,6 @@ class _DashboardState extends State<SideMenu> {
         duration: Duration(seconds: 2),
       ),
     );
-
-    // Reset to dashboard without setState during build
     Future.microtask(() {
       if (mounted) {
         setState(() {
@@ -419,7 +416,6 @@ class _DashboardState extends State<SideMenu> {
       }
     });
 
-    // Or navigate to login screen:
     Get.offAllNamed(Routes.LOGIN);
   }
 }

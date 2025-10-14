@@ -34,9 +34,12 @@ class _DashboardState extends State<Dashboard> {
 
   final _controller = Get.put<Doctorcontroller>(Doctorcontroller());
 
-  int selectedIndex = -1;
+  int selectedIndex = 0;
 
   int selectTimeSlotIndex = 0;
+  final List<DateTime> dates =
+      List.generate(30, (i) => DateTime.now().add(Duration(days: i - 7)));
+  final DateTime today = DateTime.now();
 
   String date = "";
   late List<_ChartData> data;
@@ -533,17 +536,119 @@ class _DashboardState extends State<Dashboard> {
                           SizedBox(
                             height: 20,
                           ),
+
+                          /// Schedule Calender
+                          // Container(
+                          //   decoration: BoxDecoration(
+                          //       color: AppTheme.whiteTextColor,
+                          //       borderRadius: BorderRadius.circular(22)),
+                          //   child: Column(
+                          //     children: [
+                          //       SizedBox(
+                          //         height: 20,
+                          //       ),
+                          //       Padding(
+                          //         padding: EdgeInsets.symmetric(
+                          //           horizontal: 20,
+                          //         ),
+                          //         child: Row(
+                          //           children: [
+                          //             Text("Schedule Calendar",
+                          //                 style: GoogleFonts.rubik(
+                          //                   color: AppTheme.blackColor,
+                          //                   fontSize:
+                          //                       Constant.TwentyHeight(context),
+                          //                   fontWeight: FontWeight.w600,
+                          //                 )),
+                          //           ],
+                          //         ),
+                          //       ),
+                          //       Divider(
+                          //         height: 20,
+                          //         color: Color.fromRGBO(226, 226, 227, 1),
+                          //       ),
+                          //       SingleChildScrollView(
+                          //         scrollDirection: Axis.horizontal,
+                          //         child: Row(
+                          //           children: List.generate(
+                          //             dates.length,
+                          //             (index) {
+                          //               bool isSelected =
+                          //                   selectedIndex == index;
+                          //               return GestureDetector(
+                          //                 onTap: () {
+                          //                   selectDate(index, dates[index]);
+                          //                 },
+                          //                 child: Container(
+                          //                   margin: EdgeInsets.symmetric(
+                          //                       horizontal: 8, vertical: 10),
+                          //                   padding: EdgeInsets.symmetric(
+                          //                       horizontal: 16, vertical: 18),
+                          //                   decoration: BoxDecoration(
+                          //                     color: isSelected
+                          //                         ? AppTheme.lightPrimaryColor
+                          //                         : Colors.transparent,
+                          //                     borderRadius:
+                          //                         BorderRadius.circular(16),
+                          //                   ),
+                          //                   child: Column(
+                          //                     children: [
+                          //                       Text(
+                          //                           DateFormat('E')
+                          //                               .format(dates[index]),
+                          //                           style: GoogleFonts.rubik(
+                          //                             color: isSelected
+                          //                                 ? Colors.white
+                          //                                 : Colors.black,
+                          //                             fontSize:
+                          //                                 Constant.smallbody(
+                          //                                     context),
+                          //                             fontWeight:
+                          //                                 FontWeight.w300,
+                          //                           )),
+                          //                       SizedBox(
+                          //                         height: 8,
+                          //                       ),
+                          //                       Text(
+                          //                         DateFormat('d')
+                          //                             .format(dates[index]),
+                          //                         textAlign: TextAlign.center,
+                          //                         style: GoogleFonts.rubik(
+                          //                           color: isSelected
+                          //                               ? Colors.white
+                          //                               : Colors.black,
+                          //                           fontSize: 16,
+                          //                           fontWeight: isSelected
+                          //                               ? FontWeight.w600
+                          //                               : FontWeight.w600,
+                          //                         ),
+                          //                       ),
+                          //                     ],
+                          //                   ),
+                          //                 ),
+                          //               );
+                          //             },
+                          //           ),
+                          //         ),
+                          //       ),
+                          //       SizedBox(
+                          //         height: 12,
+                          //       ),
+                          //     ],
+                          //   ),
+                          // ),
+
                           Container(
                             decoration: BoxDecoration(
                                 color: AppTheme.whiteTextColor,
                                 borderRadius: BorderRadius.circular(22)),
                             child: Column(
                               children: [
-                                SizedBox(
+                                const SizedBox(
                                   height: 20,
                                 ),
                                 Padding(
-                                  padding: EdgeInsets.symmetric(
+                                  padding: const EdgeInsets.symmetric(
                                     horizontal: 20,
                                   ),
                                   child: Row(
@@ -558,7 +663,7 @@ class _DashboardState extends State<Dashboard> {
                                     ],
                                   ),
                                 ),
-                                Divider(
+                                const Divider(
                                   height: 20,
                                   color: Color.fromRGBO(226, 226, 227, 1),
                                 ),
@@ -568,16 +673,24 @@ class _DashboardState extends State<Dashboard> {
                                     children: List.generate(
                                       dates.length,
                                       (index) {
-                                        bool isSelected =
+                                        final date = dates[index];
+
+                                        final isToday =
+                                            date.year == today.year &&
+                                                date.month == today.month &&
+                                                date.day == today.day;
+
+                                        final bool isSelected =
                                             selectedIndex == index;
+
                                         return GestureDetector(
                                           onTap: () {
                                             selectDate(index, dates[index]);
                                           },
                                           child: Container(
-                                            margin: EdgeInsets.symmetric(
+                                            margin: const EdgeInsets.symmetric(
                                                 horizontal: 8, vertical: 10),
-                                            padding: EdgeInsets.symmetric(
+                                            padding: const EdgeInsets.symmetric(
                                                 horizontal: 16, vertical: 18),
                                             decoration: BoxDecoration(
                                               color: isSelected
@@ -585,6 +698,12 @@ class _DashboardState extends State<Dashboard> {
                                                   : Colors.transparent,
                                               borderRadius:
                                                   BorderRadius.circular(16),
+                                              border: isToday && !isSelected
+                                                  ? Border.all(
+                                                      color: AppTheme
+                                                          .lightPrimaryColor,
+                                                      width: 1.5)
+                                                  : null,
                                             ),
                                             child: Column(
                                               children: [
@@ -592,6 +711,7 @@ class _DashboardState extends State<Dashboard> {
                                                     DateFormat('E')
                                                         .format(dates[index]),
                                                     style: GoogleFonts.rubik(
+                                                      // Text color changes only for selected item
                                                       color: isSelected
                                                           ? Colors.white
                                                           : Colors.black,
@@ -601,7 +721,7 @@ class _DashboardState extends State<Dashboard> {
                                                       fontWeight:
                                                           FontWeight.w300,
                                                     )),
-                                                SizedBox(
+                                                const SizedBox(
                                                   height: 8,
                                                 ),
                                                 Text(
@@ -613,9 +733,7 @@ class _DashboardState extends State<Dashboard> {
                                                         ? Colors.white
                                                         : Colors.black,
                                                     fontSize: 16,
-                                                    fontWeight: isSelected
-                                                        ? FontWeight.w600
-                                                        : FontWeight.w600,
+                                                    fontWeight: FontWeight.w600,
                                                   ),
                                                 ),
                                               ],
@@ -626,7 +744,7 @@ class _DashboardState extends State<Dashboard> {
                                     ),
                                   ),
                                 ),
-                                SizedBox(
+                                const SizedBox(
                                   height: 12,
                                 ),
                               ],
@@ -635,6 +753,8 @@ class _DashboardState extends State<Dashboard> {
                           SizedBox(
                             height: 20,
                           ),
+
+                          ///chart
                           Expanded(
                             child: Container(
                                 padding: EdgeInsets.all(16),
