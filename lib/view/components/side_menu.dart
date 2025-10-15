@@ -171,7 +171,8 @@ class _DashboardState extends State<SideMenu> {
 
     switch (selectIndex) {
       case 0:
-        return Dashboard();
+        // return Dashboard();
+        return OfflineConsultation();
       case 1:
         return OfflineConsultation();
 

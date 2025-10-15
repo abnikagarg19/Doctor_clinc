@@ -1,8 +1,12 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:chatbot/controller/DoctorController.dart';
+import 'package:chatbot/utils/custom_print.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:vad/vad.dart';
 
 import '../../theme/apptheme.dart';
@@ -19,10 +23,11 @@ class _OfflineConsultationState extends State<OfflineConsultation>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
-  bool _isAiSpeaking = false;
+  bool _isAiSpeaking = true;
 
   final _vadHandler = VadHandler.create(isDebug: true);
-  bool isListening = false;
+
+  // bool isListening = false;
   final List<String> receivedEvents = [];
   int selectTabs = 0;
   List tabsLIst = [
@@ -32,6 +37,7 @@ class _OfflineConsultationState extends State<OfflineConsultation>
     "Lab Results",
     "Medications"
   ];
+
   @override
   void initState() {
     super.initState();
@@ -77,11 +83,16 @@ class _OfflineConsultationState extends State<OfflineConsultation>
       _isAiSpeaking = false;
     });
     _animationController.stop();
-    // Reset to the original size
     _animationController.reset();
   }
 
   List chatList = [];
+  List<Map<String, dynamic>> chatMessage = [
+    {"sender": "doctor", "text": "Hello, how are you today?"},
+    {"sender": "patient", "text": "I have a headache since morning."},
+    {"sender": "doctor", "text": "Okay, let’s check that."},
+  ];
+  String activeSpeaker = "doctor";
 
   /// Convert samples → WAV bytes
   Future<Uint8List> saveSamplesAsWavBytes(
@@ -144,24 +155,49 @@ class _OfflineConsultationState extends State<OfflineConsultation>
   String speakText = "Welcome!👋\n\nReady for a quick health check?";
 
   Future<void> _setupVadHandler() async {
+    var status = await Permission.microphone.request();
+
+    if (status.isDenied || status.isPermanentlyDenied) {
+      warningPrint("Microphone permission denied by user or system.");
+      return;
+    }
     _vadHandler.onSpeechStart.listen((_) {
-      debugPrint('Speech detected.');
+      alertPrint('Speech detected.');
       setState(() => receivedEvents.add('Speech detected.'));
     });
 
     _vadHandler.onRealSpeechStart.listen((_) {
-      debugPrint('Real speech start detected (not a misfire).');
+      alertPrint('Real speech start detected (not a misfire).');
       setState(() => receivedEvents.add('Real speech start detected.'));
     });
     _vadHandler.onVADMisfire.listen((_) {
-      debugPrint(
+      alertPrint(
           'onVADMisfire onVADMisfire onVADMisfire detected (not a misfire).');
       setState(
           () => receivedEvents.add('Real onVADMisfire onVADMisfire detected.'));
     });
 
+    // _vadHandler.onSpeechEnd.listen((List<double> samples) async {
+    //   debugPrint(
+    //       'Speech ended, first 10 samples: ${samples.take(10).toList()}');
+    //   setState(() {
+    //     receivedEvents.add(
+    //       'Speech ended, first 10 samples: ${samples.take(10).toList()}',
+    //     );
+    //   });
+    //
+    //   // ✅ Always get wavBytes
+    //   final wavBytes = await saveSamplesAsWavBytes(samples);
+    //
+    //   debugPrint("WAV ready in memory (${wavBytes.lengthInBytes} bytes)");
+    //
+    //   // ✅ Send to Sarvam AI
+    //   // await sendToSarvam(wavBytes);
+    // });
+    /// New
     _vadHandler.onSpeechEnd.listen((List<double> samples) async {
-      debugPrint(
+      alertPrint("Speech ended, processing transcription...");
+      warningPrint(
           'Speech ended, first 10 samples: ${samples.take(10).toList()}');
       setState(() {
         receivedEvents.add(
@@ -172,10 +208,18 @@ class _OfflineConsultationState extends State<OfflineConsultation>
       // ✅ Always get wavBytes
       final wavBytes = await saveSamplesAsWavBytes(samples);
 
-      debugPrint("WAV ready in memory (${wavBytes.lengthInBytes} bytes)");
-
+      alertPrint("WAV ready in memory (${wavBytes.lengthInBytes} bytes)");
+      final transcribedText = await sendToSpeechToTextApi(wavBytes);
       // ✅ Send to Sarvam AI
       // await sendToSarvam(wavBytes);
+      if (transcribedText != null && transcribedText.isNotEmpty) {
+        setState(() {
+          chatMessage.add({
+            "sender": activeSpeaker,
+            "text": transcribedText,
+          });
+        });
+      }
     });
 
     _vadHandler.onFrameProcessed.listen((frameData) {
@@ -185,18 +229,24 @@ class _OfflineConsultationState extends State<OfflineConsultation>
     });
 
     _vadHandler.onVADMisfire.listen((_) {
-      debugPrint('VAD misfire detected.');
+      alertPrint('VAD misfire detected.');
       setState(() => receivedEvents.add('VAD misfire detected.'));
     });
 
     _vadHandler.onError.listen((String message) {
-      debugPrint('Error: $message');
+      alertPrint('Error: $message');
       setState(() => receivedEvents.add('Error: $message'));
     });
     await _vadHandler.startListening(
       submitUserSpeechOnPause: true,
     );
     // sendToChatApi("");
+  }
+
+  /// Dummy mock api
+  Future<String> sendToSpeechToTextApi(Uint8List wavBytes) async {
+    await Future.delayed(Duration(seconds: 2));
+    return "This is a sample transcribed text.";
   }
 
   @override
@@ -219,687 +269,7 @@ class _OfflineConsultationState extends State<OfflineConsultation>
   String doctor_impression_and_diagnosis = "";
   @override
   Widget build(BuildContext context) {
-    // return Expanded(child: LayoutBuilder(
-    //     // If our width is more than 1100 then we consider it a desktop
-    //     builder: (context, constraints) {
-    //   return Padding(
-    //     padding: const EdgeInsets.all(16.0),
-    //     child: Row(children: [
-    //       // Video Call Section
-    //       Expanded(
-    //         flex: 4,
-    //         child: Column(
-    //           children: [
-    //             Expanded(
-    //               child: Container(
-    //                 height: double.infinity,
-    //                 decoration: BoxDecoration(
-    //                     color: AppTheme.whiteTextColor,
-    //                     borderRadius: BorderRadius.circular(22),
-    //                     border: Border.all(
-    //                         color: Color.fromRGBO(213, 213, 213, 1))),
-    //                 child: Column(children: [
-    //                   Expanded(
-    //                     child: ListView.builder(
-    //                       // reverse: true,
-    //                       // controller: controller
-    //                       //     .scrollController, // 👈 attach controller
-    //                       //controller: controller.scrollcontroller,
-    //                       itemCount: 1,
-    //                       padding: EdgeInsets.zero,
-    //                       physics: const BouncingScrollPhysics(),
-    //                       itemBuilder: (BuildContext context, int index) {
-    //                         // final words = controller.aichatList[index]["ans"]
-    //                         //     .toString()
-    //                         //     .split(' ');
-    //
-    //                         return Container(
-    //                           padding: EdgeInsets.symmetric(horizontal: 20),
-    //                           width: double.infinity,
-    //                           child: Column(
-    //                             children: [
-    //                               SizedBox(
-    //                                 height: 20,
-    //                               ),
-    //                               // if (controller.messages[index]
-    //                               //         ["sender_type"] ==
-    //                               //     "doctor")
-    //                               Container(
-    //                                 // color:
-    //                                 //     Theme.of(context).scaffoldBackgroundColor,
-    //                                 child: Container(
-    //                                   width: double.infinity,
-    //                                   margin: EdgeInsets.only(
-    //                                     right: 0,
-    //                                   ),
-    //                                   // decoration: BoxDecoration(
-    //                                   //   color: AppTheme.whiteBackgroundColor,
-    //                                   //   borderRadius: BorderRadius.circular(12),
-    //                                   // ),
-    //                                   child: IntrinsicHeight(
-    //                                     child: Row(
-    //                                       mainAxisAlignment:
-    //                                           MainAxisAlignment.end,
-    //                                       children: [
-    //                                         Flexible(
-    //                                           child: Column(
-    //                                             crossAxisAlignment:
-    //                                                 CrossAxisAlignment.end,
-    //                                             mainAxisAlignment:
-    //                                                 MainAxisAlignment.end,
-    //                                             children: [
-    //                                               Container(
-    //                                                   margin: EdgeInsets.only(
-    //                                                     right: 6,
-    //                                                     top: 6,
-    //                                                     bottom: 6,
-    //                                                   ),
-    //                                                   child: Text("Hi",
-    //                                                       style: GoogleFonts
-    //                                                           .quicksand(
-    //                                                         color:
-    //                                                             Color.fromRGBO(
-    //                                                                 0, 0, 0, 1),
-    //                                                         fontSize: 14,
-    //                                                         fontWeight:
-    //                                                             FontWeight.w500,
-    //                                                         height: 1.6,
-    //                                                       )))
-    //                                             ],
-    //                                           ),
-    //                                         ),
-    //                                         VerticalDivider(
-    //                                           color: Color.fromRGBO(
-    //                                               66, 217, 129, 1),
-    //                                           width: 20,
-    //                                           thickness: 4,
-    //                                         ),
-    //                                       ],
-    //                                     ),
-    //                                   ),
-    //                                 ),
-    //                               ),
-    //                               SizedBox(height: 20),
-    //                               // if (controller.messages[index]
-    //                               //         ["sender_type"] ==
-    //                               //     "patient")
-    //                               Align(
-    //                                 alignment: Alignment.topLeft,
-    //                                 child: IntrinsicHeight(
-    //                                   child: Row(
-    //                                     crossAxisAlignment:
-    //                                         CrossAxisAlignment.start,
-    //                                     mainAxisAlignment:
-    //                                         MainAxisAlignment.start,
-    //                                     children: [
-    //                                       VerticalDivider(
-    //                                         color: AppTheme.lightPrimaryColor,
-    //                                         width: 20,
-    //                                         thickness: 4,
-    //                                       ),
-    //                                       Flexible(
-    //                                         child: Container(
-    //                                           // margin:
-    //                                           //     EdgeInsets
-    //                                           //         .only(
-    //                                           //   right: 40,
-    //                                           // ),
-    //                                           // width: MediaQuery.of(
-    //                                           //             context)
-    //                                           //         .size
-    //                                           //         .width /
-    //                                           //     2.6,
-    //                                           // decoration: BoxDecoration(
-    //                                           //   color: AppTheme.whiteBackgroundColor,
-    //                                           //   borderRadius: BorderRadius.circular(12),
-    //                                           // ),
-    //                                           alignment: Alignment.centerLeft,
-    //                                           child: Container(
-    //                                             margin: EdgeInsets.only(
-    //                                               left: 8,
-    //                                               top: 2,
-    //                                               bottom: 2,
-    //                                             ),
-    //                                             child: Text(
-    //                                               "Hello",
-    //                                               style: GoogleFonts.quicksand(
-    //                                                 color: Color.fromRGBO(
-    //                                                     0, 0, 0, 1),
-    //                                                 fontSize: 14,
-    //                                                 fontWeight: FontWeight.w500,
-    //                                                 height: 1.6,
-    //                                               ),
-    //                                             ),
-    //                                           ),
-    //                                         ),
-    //                                       ),
-    //                                     ],
-    //                                   ),
-    //                                 ),
-    //                               ),
-    //                               SizedBox(height: 20),
-    //                             ],
-    //                           ),
-    //                         );
-    //                       },
-    //                     ),
-    //                   ),
-    //                 ]),
-    //               ),
-    //             ),
-    //             SizedBox(
-    //               height: 10,
-    //             ),
-    //             Row(
-    //               children: [
-    //                 Expanded(
-    //                   child: Container(
-    //                     padding: EdgeInsets.symmetric(horizontal: 12),
-    //                     decoration: BoxDecoration(
-    //                         color: Colors.white,
-    //                         borderRadius: BorderRadius.circular(12)),
-    //                     height: 200, // fixed height to enable scrolling
-    //                     child: Column(
-    //                       crossAxisAlignment: CrossAxisAlignment.start,
-    //                       children: [
-    //                         SizedBox(
-    //                           height: 10,
-    //                         ),
-    //                         Text("Medications prescribed",
-    //                             style: GoogleFonts.rubik(
-    //                                 color: Color.fromRGBO(0, 0, 0, 1),
-    //                                 fontSize: 14,
-    //                                 fontWeight: FontWeight.w700)),
-    //                         SizedBox(
-    //                           height: 20,
-    //                         ),
-    //                         Expanded(
-    //                           child: SingleChildScrollView(
-    //                             child: Column(
-    //                               children: List.generate(
-    //                                 medicines.length,
-    //                                 (index) {
-    //                                   return Padding(
-    //                                     padding: const EdgeInsets.all(8.0),
-    //                                     child: Container(
-    //                                       width: double.infinity,
-    //                                       decoration: BoxDecoration(
-    //                                           borderRadius:
-    //                                               BorderRadius.circular(12),
-    //                                           border: Border.all(
-    //                                               color: Colors.black12)),
-    //                                       padding: const EdgeInsets.all(12.0),
-    //                                       child: Column(
-    //                                         crossAxisAlignment:
-    //                                             CrossAxisAlignment.start,
-    //                                         children: [
-    //                                           Text(
-    //                                               "${medicines[index]["name"]}",
-    //                                               style: GoogleFonts.rubik(
-    //                                                   color: Color.fromRGBO(
-    //                                                       0, 0, 0, 1),
-    //                                                   fontSize: 14,
-    //                                                   fontWeight:
-    //                                                       FontWeight.w400)),
-    //                                           Row(
-    //                                             children: [
-    //                                               Text(
-    //                                                   "${medicines[index]["dosage"]} - ",
-    //                                                   style: GoogleFonts.rubik(
-    //                                                       color: Color.fromRGBO(
-    //                                                           72, 72, 72, 1),
-    //                                                       fontSize: 14,
-    //                                                       fontWeight:
-    //                                                           FontWeight.w400)),
-    //                                               Text(
-    //                                                   "${medicines[index]["frequency"]}",
-    //                                                   style: GoogleFonts.rubik(
-    //                                                       color: Color.fromRGBO(
-    //                                                           72, 72, 72, 1),
-    //                                                       fontSize: 14,
-    //                                                       fontWeight:
-    //                                                           FontWeight.w400)),
-    //                                             ],
-    //                                           ),
-    //                                           Text(
-    //                                               "${medicines[index]["side_effects"]}",
-    //                                               style: GoogleFonts.rubik(
-    //                                                   color: Color.fromRGBO(
-    //                                                       72, 72, 72, 1),
-    //                                                   fontSize: 14,
-    //                                                   fontWeight:
-    //                                                       FontWeight.w400)),
-    //                                         ],
-    //                                       ),
-    //                                     ),
-    //                                   );
-    //                                 },
-    //                               ),
-    //                             ),
-    //                           ),
-    //                         ),
-    //                       ],
-    //                     ),
-    //                   ),
-    //                 ),
-    //                 SizedBox(
-    //                   width: 20,
-    //                 ),
-    //
-    //                 /// Test Prescribed
-    //                 // Expanded(
-    //                 //   child: Container(
-    //                 //     padding: EdgeInsets.symmetric(horizontal: 12),
-    //                 //     decoration: BoxDecoration(
-    //                 //         color: Colors.white,
-    //                 //         borderRadius: BorderRadius.circular(12)),
-    //                 //     height: 200, // fixed height to enable scrolling
-    //                 //     child: Column(
-    //                 //       crossAxisAlignment: CrossAxisAlignment.start,
-    //                 //       children: [
-    //                 //         SizedBox(
-    //                 //           height: 10,
-    //                 //         ),
-    //                 //         Text("Test prescribed",
-    //                 //             style: GoogleFonts.rubik(
-    //                 //                 color: Color.fromRGBO(0, 0, 0, 1),
-    //                 //                 fontSize: 14,
-    //                 //                 fontWeight: FontWeight.w700)),
-    //                 //         SizedBox(
-    //                 //           height: 20,
-    //                 //         ),
-    //                 //         Expanded(
-    //                 //           child: SingleChildScrollView(
-    //                 //             child: Column(
-    //                 //               crossAxisAlignment: CrossAxisAlignment.start,
-    //                 //               children: List.generate(
-    //                 //                 tests.length,
-    //                 //                 (index) {
-    //                 //                   return Padding(
-    //                 //                     padding: const EdgeInsets.all(8.0),
-    //                 //                     child: Text("${tests[index]}",
-    //                 //                         style: GoogleFonts.rubik(
-    //                 //                             color:
-    //                 //                                 Color.fromRGBO(0, 0, 0, 1),
-    //                 //                             fontSize: 14,
-    //                 //                             fontWeight: FontWeight.w400)),
-    //                 //                   );
-    //                 //                 },
-    //                 //               ),
-    //                 //             ),
-    //                 //           ),
-    //                 //         ),
-    //                 //       ],
-    //                 //     ),
-    //                 //   ),
-    //                 // ),
-    //               ],
-    //             ),
-    //           ],
-    //         ),
-    //       ),
-    //       Expanded(
-    //         flex: 8,
-    //         child: Row(
-    //           children: [
-    //             Expanded(
-    //               child: Column(
-    //                 children: [
-    //                   Expanded(
-    //                     child: Row(
-    //                       children: [
-    //                         if (constraints.maxHeight < constraints.maxWidth)
-    //                           const SizedBox(width: 20),
-    //                         Expanded(
-    //                           flex: 4,
-    //                           child: Container(
-    //                             height: double.infinity,
-    //                             width: double.infinity,
-    //                             decoration: BoxDecoration(
-    //                               color: Colors.white,
-    //                               borderRadius: BorderRadius.circular(22),
-    //                             ),
-    //                             padding: EdgeInsets.symmetric(horizontal: 12),
-    //                             child: SingleChildScrollView(
-    //                               child: Column(
-    //                                 children: [
-    //                                   SizedBox(
-    //                                     height: 40,
-    //                                   ),
-    //                                   GestureDetector(
-    //                                     onTap: () {
-    //                                       setState(() {
-    //                                         _isAiSpeaking = !_isAiSpeaking;
-    //                                       });
-    //                                       if (_isAiSpeaking) {
-    //                                         startAnimation();
-    //                                       } else {
-    //                                         stopAiAnimation();
-    //                                       }
-    //                                     },
-    //                                     child: ScaleTransition(
-    //                                       scale: _scaleAnimation,
-    //                                       child: Container(
-    //                                         width: 70,
-    //                                         height: 70,
-    //                                         decoration: const BoxDecoration(
-    //                                           shape: BoxShape.circle,
-    //                                           gradient: RadialGradient(
-    //                                             colors: [
-    //                                               Color(0xFF90F2FF),
-    //                                               Color(0xFF37C3FF),
-    //                                             ],
-    //                                             radius: 0.3,
-    //                                           ),
-    //                                           boxShadow: [
-    //                                             BoxShadow(
-    //                                               color: Color.fromARGB(
-    //                                                   90, 117, 218, 255),
-    //                                               blurRadius: 10,
-    //                                               spreadRadius: 5,
-    //                                             ),
-    //                                           ],
-    //                                         ),
-    //                                       ),
-    //                                     ),
-    //                                   ),
-    //                                   SizedBox(
-    //                                     height: 40,
-    //                                   ),
-    //                                   Text("$doctor_suggestions",
-    //                                       style: GoogleFonts.rubik(
-    //                                           color:
-    //                                               Color.fromRGBO(12, 12, 12, 1),
-    //                                           fontSize: 14,
-    //                                           fontWeight: FontWeight.w400)),
-    //                                   SizedBox(
-    //                                     height: 40,
-    //                                   ),
-    //                                 ],
-    //                               ),
-    //                             ),
-    //                           ),
-    //                         ),
-    //                         if (constraints.maxHeight < constraints.maxWidth)
-    //                           const SizedBox(width: 20),
-    //                         if (constraints.maxHeight < constraints.maxWidth)
-    //                           Expanded(
-    //                             flex: 8,
-    //                             child: Column(
-    //                               crossAxisAlignment: CrossAxisAlignment.start,
-    //                               children: [
-    //                                 Row(
-    //                                   children: List.generate(
-    //                                     tabsLIst.length,
-    //                                     (index) {
-    //                                       return Expanded(
-    //                                         child: GestureDetector(
-    //                                           onTap: () {
-    //                                             setState(() {
-    //                                               selectTabs = index;
-    //                                             });
-    //                                           },
-    //                                           child: Container(
-    //                                             padding: EdgeInsets.symmetric(
-    //                                                 vertical: 8),
-    //                                             decoration: BoxDecoration(
-    //                                                 color: selectTabs == index
-    //                                                     ? Color.fromRGBO(
-    //                                                         60, 150, 255, 1)
-    //                                                     : AppTheme
-    //                                                         .whiteTextColor,
-    //                                                 boxShadow: [
-    //                                                   BoxShadow(
-    //                                                     color: const Color
-    //                                                         .fromARGB(
-    //                                                         132, 149, 147, 147),
-    //                                                     spreadRadius: 1,
-    //                                                     offset:
-    //                                                         const Offset(0, 6),
-    //                                                     blurRadius: 10,
-    //                                                   )
-    //                                                 ],
-    //                                                 borderRadius:
-    //                                                     BorderRadius.only(
-    //                                                   topLeft:
-    //                                                       Radius.circular(12),
-    //                                                   topRight:
-    //                                                       Radius.circular(12),
-    //                                                 )),
-    //                                             child: Center(
-    //                                               child: Text(
-    //                                                   "${tabsLIst[index]}",
-    //                                                   style: GoogleFonts.rubik(
-    //                                                       color: selectTabs ==
-    //                                                               index
-    //                                                           ? Color.fromRGBO(
-    //                                                               255,
-    //                                                               255,
-    //                                                               255,
-    //                                                               1)
-    //                                                           : Color.fromRGBO(
-    //                                                               142,
-    //                                                               142,
-    //                                                               142,
-    //                                                               1),
-    //                                                       fontSize: Constant
-    //                                                           .verysmallbody(
-    //                                                               context),
-    //                                                       fontWeight:
-    //                                                           FontWeight.w500)),
-    //                                             ),
-    //                                           ),
-    //                                         ),
-    //                                       );
-    //                                     },
-    //                                   ),
-    //                                 ),
-    //                                 SizedBox(
-    //                                   height: 1,
-    //                                 ),
-    //                                 Expanded(
-    //                                   child: Container(
-    //                                       padding: EdgeInsets.symmetric(
-    //                                           horizontal: 20, vertical: 30),
-    //                                       decoration: BoxDecoration(
-    //                                         color: const Color.fromRGBO(
-    //                                             255, 255, 255, 1),
-    //                                       ),
-    //                                       child: Column(
-    //                                           crossAxisAlignment:
-    //                                               CrossAxisAlignment.start,
-    //                                           mainAxisAlignment:
-    //                                               MainAxisAlignment.start,
-    //                                           children: [
-    //                                             Row(
-    //                                               crossAxisAlignment:
-    //                                                   CrossAxisAlignment.start,
-    //                                               mainAxisAlignment:
-    //                                                   MainAxisAlignment.start,
-    //                                               children: [
-    //                                                 Expanded(
-    //                                                   child: Column(
-    //                                                     crossAxisAlignment:
-    //                                                         CrossAxisAlignment
-    //                                                             .start,
-    //                                                     mainAxisAlignment:
-    //                                                         MainAxisAlignment
-    //                                                             .start,
-    //                                                     children: [
-    //                                                       Text("Patient:",
-    //                                                           style: GoogleFonts.rubik(
-    //                                                               color: AppTheme
-    //                                                                   .blackColor,
-    //                                                               fontSize: Constant
-    //                                                                   .twetysixtext(
-    //                                                                       context),
-    //                                                               fontWeight:
-    //                                                                   FontWeight
-    //                                                                       .w700)),
-    //                                                       SizedBox(
-    //                                                         height: 20,
-    //                                                       ),
-    //                                                       Text(patientSummary,
-    //                                                           style: GoogleFonts.quicksand(
-    //                                                               color: AppTheme
-    //                                                                   .blackColor,
-    //                                                               fontSize: 12,
-    //                                                               fontWeight:
-    //                                                                   FontWeight
-    //                                                                       .w500)),
-    //                                                       SizedBox(
-    //                                                         height: 20,
-    //                                                       ),
-    //                                                       SizedBox(
-    //                                                         height: 20,
-    //                                                       ),
-    //                                                       Text("Description:",
-    //                                                           style: GoogleFonts.rubik(
-    //                                                               color: AppTheme
-    //                                                                   .blackColor,
-    //                                                               fontSize: Constant
-    //                                                                   .smallbody(
-    //                                                                       context),
-    //                                                               fontWeight:
-    //                                                                   FontWeight
-    //                                                                       .w700)),
-    //                                                       SizedBox(
-    //                                                         height: 10,
-    //                                                       ),
-    //                                                       Text(
-    //                                                           lifestyle_recommendations,
-    //                                                           style: GoogleFonts.quicksand(
-    //                                                               color: AppTheme
-    //                                                                   .blackColor,
-    //                                                               fontSize: 12,
-    //                                                               fontWeight:
-    //                                                                   FontWeight
-    //                                                                       .w500)),
-    //                                                     ],
-    //                                                   ),
-    //                                                 ),
-    //                                                 SizedBox(
-    //                                                   width: 80,
-    //                                                 ),
-    //                                                 Image.asset(
-    //                                                     "assets/images/full_body.png")
-    //                                               ],
-    //                                             ),
-    //                                             // Row(
-    //                                             //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-    //                                             //   children: [
-    //                                             //     _infoButton(
-    //                                             //         "Patient Vitals", selectedTab == "vitals", () {
-    //                                             //       setState(() => selectedTab = "vitals");
-    //                                             //     }),
-    //                                             //     _infoButton(
-    //                                             //         "Patient Summary", selectedTab == "summary",
-    //                                             //         () {
-    //                                             //       setState(() => selectedTab = "summary");
-    //                                             //     }),
-    //                                             //   ],
-    //                                             // ),
-    //                                             // const SizedBox(height: 20),
-    //                                             // Expanded(
-    //                                             //     child: selectedTab == "vitals"
-    //                                             //         ? PatientVitalsWidget(height, width)
-    //                                             //         : PatientSummaryWidget(height, width))
-    //                                           ])),
-    //                                 ),
-    //                               ],
-    //                             ),
-    //                           ),
-    //                       ],
-    //                     ),
-    //                   ),
-    //                   SizedBox(
-    //                     height: 10,
-    //                   ),
-    //                   Row(
-    //                     children: [
-    //                       SizedBox(
-    //                         width: 20,
-    //                       ),
-    //
-    //                       ///Doctor impression and diagnoses
-    //                       Expanded(
-    //                         child: Container(
-    //                           padding: EdgeInsets.symmetric(horizontal: 12),
-    //                           decoration: BoxDecoration(
-    //                               color: Colors.white,
-    //                               borderRadius: BorderRadius.circular(12)),
-    //                           height: 200,
-    //                           child: Column(
-    //                             crossAxisAlignment: CrossAxisAlignment.start,
-    //                             children: [
-    //                               SizedBox(
-    //                                 height: 10,
-    //                               ),
-    //                               Text("Doctor impression and diagnoses",
-    //                                   style: GoogleFonts.rubik(
-    //                                       color: Color.fromRGBO(0, 0, 0, 1),
-    //                                       fontSize: 14,
-    //                                       fontWeight: FontWeight.w700)),
-    //                               SizedBox(
-    //                                 height: 20,
-    //                               ),
-    //                               Expanded(
-    //                                   child: Container(
-    //                                 child:
-    //                                     Text(doctor_impression_and_diagnosis),
-    //                               )),
-    //                             ],
-    //                           ),
-    //                         ),
-    //                       ),
-    //
-    //                       SizedBox(
-    //                         width: 20,
-    //                       ),
-    //                       Expanded(
-    //                         child: Container(
-    //                           padding: EdgeInsets.symmetric(horizontal: 12),
-    //                           decoration: BoxDecoration(
-    //                               color: Colors.white,
-    //                               borderRadius: BorderRadius.circular(12)),
-    //                           height: 200, // fixed height to enable scrolling
-    //                           child: Column(
-    //                             crossAxisAlignment: CrossAxisAlignment.start,
-    //                             children: [
-    //                               SizedBox(
-    //                                 height: 10,
-    //                               ),
-    //                               Text("Advice and plan",
-    //                                   style: GoogleFonts.rubik(
-    //                                       color: Color.fromRGBO(0, 0, 0, 1),
-    //                                       fontSize: 14,
-    //                                       fontWeight: FontWeight.w700)),
-    //                               SizedBox(
-    //                                 height: 20,
-    //                               ),
-    //                               Expanded(
-    //                                 child: Text("$lifestyle_recommendations",
-    //                                     style: GoogleFonts.rubik(
-    //                                         color: Color.fromRGBO(0, 0, 0, 1),
-    //                                         fontSize: 14,
-    //                                         fontWeight: FontWeight.w400)),
-    //                               ),
-    //                             ],
-    //                           ),
-    //                         ),
-    //                       ),
-    //                     ],
-    //                   ),
-    //                 ],
-    //               ),
-    //             )
-    //           ],
-    //         ),
-    //       )
-    //     ]),
-    //   );
-    // }));
-
+    final controller = Get.put<Doctorcontroller>(Doctorcontroller());
     return Expanded(
       child: Column(
         children: [
@@ -1068,14 +438,17 @@ class _OfflineConsultationState extends State<OfflineConsultation>
                           height: 40,
                         ),
                         GestureDetector(
-                          onTap: () {
+                          onTap: () async {
                             setState(() {
                               _isAiSpeaking = !_isAiSpeaking;
                             });
                             if (_isAiSpeaking) {
                               startAnimation();
+
+                              await _setupVadHandler();
                             } else {
                               stopAiAnimation();
+                              _vadHandler.stopListening();
                             }
                           },
                           child: ScaleTransition(
@@ -1106,6 +479,35 @@ class _OfflineConsultationState extends State<OfflineConsultation>
                         SizedBox(
                           height: 20,
                         ),
+                        // Row(
+                        //   mainAxisAlignment: MainAxisAlignment.center,
+                        //   children: [
+                        //     Text("Active Speaker: "),
+                        //     DropdownButton<String>(
+                        //       value: activeSpeaker,
+                        //       items: [
+                        //         DropdownMenuItem(
+                        //             value: "patient",
+                        //             child: Text(
+                        //               "Patient",
+                        //               style: TextStyle(color: Colors.white),
+                        //             )),
+                        //         DropdownMenuItem(
+                        //             value: "doctor",
+                        //             child: Text(
+                        //               "Doctor",
+                        //               style: TextStyle(color: Colors.white),
+                        //             )),
+                        //       ],
+                        //       onChanged: (value) {
+                        //         setState(() {
+                        //           activeSpeaker = value!;
+                        //         });
+                        //       },
+                        //     ),
+                        //   ],
+                        // ),
+
                         Container(
                           height: 60,
                           width: 200,
@@ -1127,7 +529,75 @@ class _OfflineConsultationState extends State<OfflineConsultation>
                             "Patient us feeling xxx",
                             textAlign: TextAlign.center,
                           ),
-                        )
+                        ),
+                        SizedBox(
+                          height: 10,
+                        ),
+
+                        /// chat transcribe
+                        Container(
+                          height: 300, // adjust as needed
+                          width: double.infinity,
+                          padding: EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[50],
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: ListView.builder(
+                            itemCount: chatMessage.length,
+                            itemBuilder: (context, index) {
+                              final msg = chatMessage[index];
+                              final isDoctor = msg["sender"] == "doctor";
+                              return Align(
+                                alignment: isDoctor
+                                    ? Alignment.centerRight
+                                    : Alignment.centerLeft,
+                                child: Container(
+                                  margin: EdgeInsets.symmetric(
+                                      vertical: 6, horizontal: 8),
+                                  padding: EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: isDoctor
+                                        ? Colors.blue[100]
+                                        : Colors.green[100],
+                                    borderRadius: BorderRadius.only(
+                                      topLeft: Radius.circular(12),
+                                      topRight: Radius.circular(12),
+                                      bottomLeft: isDoctor
+                                          ? Radius.circular(12)
+                                          : Radius.circular(0),
+                                      bottomRight: isDoctor
+                                          ? Radius.circular(0)
+                                          : Radius.circular(12),
+                                    ),
+                                  ),
+                                  child: Text(msg["text"]),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        SizedBox(
+                          height: 10,
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ElevatedButton.icon(
+                              onPressed: () async {
+                                await controller
+                                    .downloadChatPdfWeb(chatMessage);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text(
+                                          "Chat PDF downloaded successfully!")),
+                                );
+                              },
+                              icon: const Icon(Icons.download),
+                              label: const Text("Download"),
+                            ),
+                          ],
+                        ),
                       ]),
                     ),
                   ),
