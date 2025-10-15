@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:html' as html;
 import 'dart:io';
@@ -9,6 +10,7 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 class Doctorcontroller extends GetxController {
   @override
@@ -164,5 +166,105 @@ class Doctorcontroller extends GetxController {
       ..setAttribute('download', 'doctor_patient_chat.pdf')
       ..click();
     html.Url.revokeObjectUrl(url);
+  }
+
+  final stt.SpeechToText _speechToText = stt.SpeechToText();
+  late Function(String) _onResultCallback;
+  bool isCurrentBubbleActive = false;
+  final chatMessage = <Map<String, dynamic>>[].obs;
+  String activeSpeaker = "doctor";
+  String _lastFinalizedText = "";
+  bool _isListeningManuallyStopped = true;
+
+  Future<void> _initializeSpeech() async {
+    await _speechToText.initialize(
+      onError: (error) => print('STT Init Error: $error'),
+      onStatus: (status) {
+        print('STT Status: $status');
+
+        if (status == 'done' || status == 'notListening') {
+          if (chatMessage.isNotEmpty && isCurrentBubbleActive) {
+            _lastFinalizedText = chatMessage.map((m) => m['text']).join(' ');
+          }
+          isCurrentBubbleActive = false;
+
+          // <-- SOLUTION: Add a small delay before restarting
+          // This prevents the race condition that causes the InvalidStateError.
+          Future.delayed(const Duration(milliseconds: 100), () {
+            _startRecognitionCycle();
+          });
+        }
+      },
+    );
+  }
+
+  Future<void> startListening(Function(String) onResult) async {
+    if (_speechToText.isListening) return;
+
+    _onResultCallback = onResult;
+    _isListeningManuallyStopped = false;
+    _lastFinalizedText = "";
+    isCurrentBubbleActive = false;
+    chatMessage.clear(); // Clear previous chat on start
+
+    if (!_speechToText.isAvailable) {
+      await _initializeSpeech();
+    }
+
+    if (_speechToText.isAvailable) {
+      _startRecognitionCycle();
+    } else {
+      print("Speech recognition not available.");
+    }
+  }
+
+  void _startRecognitionCycle() {
+    // Exit condition for the loop. Also, add a safety check for `isListening`.
+    if (_isListeningManuallyStopped || _speechToText.isListening) {
+      return;
+    }
+
+    _speechToText.listen(
+      onResult: (result) {
+        String fullTranscript = result.recognizedWords;
+        // Logic to get only the new text for the current bubble
+        String currentUtteranceText =
+            fullTranscript.replaceFirst(_lastFinalizedText, '').trim();
+
+        if (currentUtteranceText.isEmpty && !result.finalResult) return;
+
+        if (!isCurrentBubbleActive) {
+          // Only add a new bubble if there's actual new text
+          if (currentUtteranceText.isNotEmpty) {
+            chatMessage.add({
+              "sender": activeSpeaker,
+              "text": currentUtteranceText,
+            });
+            isCurrentBubbleActive = true;
+          }
+        } else {
+          chatMessage.last['text'] = currentUtteranceText;
+        }
+        _onResultCallback(fullTranscript);
+      },
+      pauseFor: const Duration(seconds: 10),
+      listenOptions: stt.SpeechListenOptions(
+        partialResults: true,
+      ),
+    );
+  }
+
+  void stopListening() {
+    print("Manual stop initiated.");
+    _isListeningManuallyStopped = true;
+    _speechToText.stop(); // Use stop() for a graceful shutdown
+    isCurrentBubbleActive = false;
+  }
+
+  @override
+  void onClose() {
+    _isListeningManuallyStopped = true;
+    _speechToText.cancel(); // Use cancel() for immediate termination in dispose
+    super.onClose();
   }
 }

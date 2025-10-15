@@ -47,7 +47,7 @@ class _OfflineConsultationState extends State<OfflineConsultation>
     _scaleAnimation = Tween<double>(begin: 1.0, end: 1.15).animate(
         CurvedAnimation(parent: _animationController, curve: Curves.easeInOut));
 
-    startAnimation();
+    // startAnimation();
 
     // final ws = OfflineService(
     //   url: "wss://api.carepal.in/api/v1/voice_agent/ws",
@@ -87,12 +87,6 @@ class _OfflineConsultationState extends State<OfflineConsultation>
   }
 
   List chatList = [];
-  List<Map<String, dynamic>> chatMessage = [
-    {"sender": "doctor", "text": "Hello, how are you today?"},
-    {"sender": "patient", "text": "I have a headache since morning."},
-    {"sender": "doctor", "text": "Okay, let’s check that."},
-  ];
-  String activeSpeaker = "doctor";
 
   /// Convert samples → WAV bytes
   Future<Uint8List> saveSamplesAsWavBytes(
@@ -155,6 +149,7 @@ class _OfflineConsultationState extends State<OfflineConsultation>
   String speakText = "Welcome!👋\n\nReady for a quick health check?";
 
   Future<void> _setupVadHandler() async {
+    final controller = Doctorcontroller();
     var status = await Permission.microphone.request();
 
     if (status.isDenied || status.isPermanentlyDenied) {
@@ -177,23 +172,6 @@ class _OfflineConsultationState extends State<OfflineConsultation>
           () => receivedEvents.add('Real onVADMisfire onVADMisfire detected.'));
     });
 
-    // _vadHandler.onSpeechEnd.listen((List<double> samples) async {
-    //   debugPrint(
-    //       'Speech ended, first 10 samples: ${samples.take(10).toList()}');
-    //   setState(() {
-    //     receivedEvents.add(
-    //       'Speech ended, first 10 samples: ${samples.take(10).toList()}',
-    //     );
-    //   });
-    //
-    //   // ✅ Always get wavBytes
-    //   final wavBytes = await saveSamplesAsWavBytes(samples);
-    //
-    //   debugPrint("WAV ready in memory (${wavBytes.lengthInBytes} bytes)");
-    //
-    //   // ✅ Send to Sarvam AI
-    //   // await sendToSarvam(wavBytes);
-    // });
     /// New
     _vadHandler.onSpeechEnd.listen((List<double> samples) async {
       alertPrint("Speech ended, processing transcription...");
@@ -214,8 +192,8 @@ class _OfflineConsultationState extends State<OfflineConsultation>
       // await sendToSarvam(wavBytes);
       if (transcribedText != null && transcribedText.isNotEmpty) {
         setState(() {
-          chatMessage.add({
-            "sender": activeSpeaker,
+          controller.chatMessage.add({
+            "sender": controller.activeSpeaker,
             "text": transcribedText,
           });
         });
@@ -442,15 +420,47 @@ class _OfflineConsultationState extends State<OfflineConsultation>
                             setState(() {
                               _isAiSpeaking = !_isAiSpeaking;
                             });
+
                             if (_isAiSpeaking) {
                               startAnimation();
 
-                              await _setupVadHandler();
+                              // Start real-time speech-to-text
+                              await controller.startListening((text) {
+                                setState(() {
+                                  if (controller.chatMessage.isNotEmpty &&
+                                      controller.chatMessage.last['sender'] ==
+                                          controller.activeSpeaker) {
+                                    // Update last message if the speaker is same
+                                    controller.chatMessage[
+                                            controller.chatMessage.length - 1]
+                                        ['text'] = text;
+                                  } else {
+                                    // Add new message if last speaker is different
+                                    controller.chatMessage.add({
+                                      "sender": controller.activeSpeaker,
+                                      "text": text,
+                                    });
+                                  }
+                                });
+                              });
                             } else {
                               stopAiAnimation();
-                              _vadHandler.stopListening();
+                              controller.stopListening();
                             }
                           },
+                          // onTap: () async {
+                          //                             setState(() {
+                          //                               _isAiSpeaking = !_isAiSpeaking;
+                          //                             });
+                          //                             if (_isAiSpeaking) {
+                          //                               startAnimation();
+                          //
+                          //                               await _setupVadHandler();
+                          //                             } else {
+                          //                               stopAiAnimation();
+                          //                               _vadHandler.stopListening();
+                          //                             }
+                          //                           },
                           child: ScaleTransition(
                             scale: _scaleAnimation,
                             child: Container(
@@ -479,34 +489,6 @@ class _OfflineConsultationState extends State<OfflineConsultation>
                         SizedBox(
                           height: 20,
                         ),
-                        // Row(
-                        //   mainAxisAlignment: MainAxisAlignment.center,
-                        //   children: [
-                        //     Text("Active Speaker: "),
-                        //     DropdownButton<String>(
-                        //       value: activeSpeaker,
-                        //       items: [
-                        //         DropdownMenuItem(
-                        //             value: "patient",
-                        //             child: Text(
-                        //               "Patient",
-                        //               style: TextStyle(color: Colors.white),
-                        //             )),
-                        //         DropdownMenuItem(
-                        //             value: "doctor",
-                        //             child: Text(
-                        //               "Doctor",
-                        //               style: TextStyle(color: Colors.white),
-                        //             )),
-                        //       ],
-                        //       onChanged: (value) {
-                        //         setState(() {
-                        //           activeSpeaker = value!;
-                        //         });
-                        //       },
-                        //     ),
-                        //   ],
-                        // ),
 
                         Container(
                           height: 60,
@@ -543,39 +525,39 @@ class _OfflineConsultationState extends State<OfflineConsultation>
                             color: Colors.grey[50],
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: ListView.builder(
-                            itemCount: chatMessage.length,
-                            itemBuilder: (context, index) {
-                              final msg = chatMessage[index];
-                              final isDoctor = msg["sender"] == "doctor";
-                              return Align(
-                                alignment: isDoctor
-                                    ? Alignment.centerRight
-                                    : Alignment.centerLeft,
-                                child: Container(
-                                  margin: EdgeInsets.symmetric(
-                                      vertical: 6, horizontal: 8),
-                                  padding: EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: isDoctor
-                                        ? Colors.blue[100]
-                                        : Colors.green[100],
-                                    borderRadius: BorderRadius.only(
-                                      topLeft: Radius.circular(12),
-                                      topRight: Radius.circular(12),
-                                      bottomLeft: isDoctor
-                                          ? Radius.circular(12)
-                                          : Radius.circular(0),
-                                      bottomRight: isDoctor
-                                          ? Radius.circular(0)
-                                          : Radius.circular(12),
+                          child: Obx(() => ListView.builder(
+                                itemCount: controller.chatMessage.length,
+                                itemBuilder: (context, index) {
+                                  final msg = controller.chatMessage[index];
+                                  final isDoctor = msg["sender"] == "doctor";
+                                  return Align(
+                                    alignment: isDoctor
+                                        ? Alignment.centerRight
+                                        : Alignment.centerLeft,
+                                    child: Container(
+                                      margin: EdgeInsets.symmetric(
+                                          vertical: 6, horizontal: 8),
+                                      padding: EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: isDoctor
+                                            ? Colors.blue[100]
+                                            : Colors.green[100],
+                                        borderRadius: BorderRadius.only(
+                                          topLeft: Radius.circular(12),
+                                          topRight: Radius.circular(12),
+                                          bottomLeft: isDoctor
+                                              ? Radius.circular(12)
+                                              : Radius.circular(0),
+                                          bottomRight: isDoctor
+                                              ? Radius.circular(0)
+                                              : Radius.circular(12),
+                                        ),
+                                      ),
+                                      child: Text(msg["text"]),
                                     ),
-                                  ),
-                                  child: Text(msg["text"]),
-                                ),
-                              );
-                            },
-                          ),
+                                  );
+                                },
+                              )),
                         ),
                         SizedBox(
                           height: 10,
@@ -586,7 +568,7 @@ class _OfflineConsultationState extends State<OfflineConsultation>
                             ElevatedButton.icon(
                               onPressed: () async {
                                 await controller
-                                    .downloadChatPdfWeb(chatMessage);
+                                    .downloadChatPdfWeb(controller.chatMessage);
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                       content: Text(
