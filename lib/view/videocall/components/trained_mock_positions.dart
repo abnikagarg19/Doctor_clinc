@@ -50,25 +50,10 @@ final Map<String, Offset> bodyPartCoordinates = {
 // This is a separate string that simulates the data from your WebSocket.
 final String mockSymptomJsonPayload = """
 [
-{
+  {
     "body_part": "left hip",
     "severity": "moderate",
     "description": "Patient reports a persistent, moderate left hip."
-  },
-  {
-    "body_part": "abdomen",
-    "severity": "moderate",
-    "description": "Patient reports a persistent, moderate abdomen."
-  },
-  {
-    "body_part": "right hip",
-    "severity": "moderate",
-    "description": "Patient reports a persistent, moderate right hip."
-  },
-  {
-    "body_part": "right thigh",
-    "severity": "moderate",
-    "description": "Patient reports a persistent, moderate right thigh."
   },
   {
     "body_part": "left thigh",
@@ -80,104 +65,45 @@ final String mockSymptomJsonPayload = """
     "severity": "moderate",
     "description": "Patient reports a persistent, moderate headache."
   },
-
-  {
-    "body_part": "left eye",
-    "severity": "high",
-    "description": "Severe irritation and redness in the left eye."
-  },
-  {
-    "body_part": "right eye",
-    "severity": "mild",
-    "description": "Slight blurriness in the right eye."
-  },
-  {
-    "body_part": "neck",
-    "severity": "moderate",
-    "description": "Moderate stiffness in the neck."
-  },
   {
     "body_part": "chest",
     "severity": "high",
     "description": "Patient reports high pressure in the chest area."
   },
-
   {
     "body_part": "stomach",
     "severity": "moderate",
     "description": "Moderate cramping sensation in the stomach."
   },
   {
-    "body_part": "left shoulder",
-    "severity": "high",
-    "description": "Severe pain in the left shoulder."
-  },
-  {
-    "body_part": "right shoulder",
-    "severity": "moderate",
-    "description": "Aching pain in the right shoulder."
-  },
-
-  {
-    "body_part": "left arm",
-    "severity": "mild",
-    "description": "Tingling sensation down the left arm."
-  },
-  {
-    "body_part": "right arm",
-    "severity": "high",
-    "description": "Moderate muscle ache in the right arm."
-  },
-  {
-    "body_part": "left hand",
-    "severity": "high",
-    "description": "Numbness in the fingers of the left hand."
-  },
-  {
-    "body_part": "right hand",
-    "severity": "high",
-    "description": "Difficulty gripping with the right hand."
-  },
-  {
     "body_part": "left wrist",
     "severity": "high",
     "description": "Severe swelling in the left wrist."
-  },
-  {
-    "body_part": "right wrist",
-    "severity": "mild",
-    "description": "A mild sprain in the right wrist."
-  },
-  {
-    "body_part": "left leg",
-    "severity": "moderate",
-    "description": "Moderate throbbing pain in the left leg."
-  },
-  {
-    "body_part": "right leg",
-    "severity": "mild",
-    "description": "Mild weakness felt in the right leg."
-  },
-  {
-    "body_part": "left knee",
-    "severity": "high",
-    "description": "Severe, sharp pain in the left knee when bending."
-  },
-  {
-    "body_part": "right knee",
-    "severity": "moderate",
-    "description": "A dull ache in the right knee."
-  },
-  {
-    "body_part": "left foot",
-    "severity": "mild",
-    "description": "Soreness on the sole of the left foot."
-  },
-  {
-    "body_part": "right foot",
-    "severity": "moderate",
-    "description": "Swelling around the ankle of the right foot."
   }
-  
 ]
 """;
+
+// You can place this in your state or controller
+final List<Map<String, dynamic>> medicines = [
+  {
+    "name": "Paracetamol",
+    "dosage": "500mg",
+    "frequency": "1-1-1",
+    "duration": "5 days",
+    "side_effects": ["Nausea", "Headache", "Vomiting", "Allergy"],
+  },
+  {
+    "name": "Amoxicillin",
+    "dosage": "250mg",
+    "frequency": "1-0-1",
+    "duration": "7 days",
+    "side_effects": ["Diarrhea", "Rash"],
+  },
+  {
+    "name": "Ibuprofen",
+    "dosage": "200mg",
+    "frequency": "As needed",
+    "duration": "3 days",
+    "side_effects": ["Stomach pain", "Heartburn"],
+  },
+];

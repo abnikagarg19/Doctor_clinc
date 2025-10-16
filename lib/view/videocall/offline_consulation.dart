@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:chatbot/controller/DoctorController.dart';
 import 'package:chatbot/utils/custom_print.dart';
@@ -13,6 +14,7 @@ import 'package:vad/vad.dart';
 import '../../theme/apptheme.dart';
 import '../../utils/constant.dart';
 import 'components/symptoms_bodyMap.dart';
+import 'components/trained_mock_positions.dart';
 
 class OfflineConsultation extends StatefulWidget {
   const OfflineConsultation({super.key});
@@ -48,7 +50,7 @@ class _OfflineConsultationState extends State<OfflineConsultation>
   // 4️⃣ Extract tests_ordered as a list
   final List tests = [];
   // 3️⃣ Extract medicines_prescribed as a list of names
-  final List medicines = [];
+  // final List medicines = [];
   final TextEditingController _searchController = TextEditingController();
   final List<String> messages = [];
   // String patientSummary = "";
@@ -497,29 +499,43 @@ class _OfflineConsultationState extends State<OfflineConsultation>
                           //                             }
                           //                           },
                           child: ScaleTransition(
-                            scale: _scaleAnimation,
-                            child: Container(
-                              width: 70,
-                              height: 70,
-                              decoration: const BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: RadialGradient(
-                                  colors: [
-                                    Color(0xFF90F2FF),
-                                    Color(0xFF37C3FF),
-                                  ],
-                                  radius: 0.3,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Color.fromARGB(90, 117, 218, 255),
-                                    blurRadius: 10,
-                                    spreadRadius: 5,
+                              scale: _scaleAnimation,
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  Transform.scale(
+                                    scale: 0.8,
+                                    child: ImageFiltered(
+                                      imageFilter: ui.ImageFilter.blur(
+                                          sigmaX: 50.0, sigmaY: 50.0),
+                                      child: Container(
+                                        decoration: const BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          gradient: LinearGradient(
+                                            colors: [
+                                              Color(0xFF00FF87),
+                                              Color(0xFF4CA9EE),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Container(
+                                    width: 70,
+                                    height: 70,
+                                    decoration: const BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          Color(0xFF00FF87),
+                                          Color(0xFF4CA9EE),
+                                        ],
+                                      ),
+                                    ),
                                   ),
                                 ],
-                              ),
-                            ),
-                          ),
+                              )),
                         ),
                         SizedBox(
                           height: 20,
@@ -959,78 +975,83 @@ class _OfflineConsultationState extends State<OfflineConsultation>
                               ),
                               Expanded(
                                 child: SingleChildScrollView(
-                                  child: Column(
-                                    children: List.generate(
-                                      medicines.length,
-                                      (index) {
-                                        return Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: Container(
-                                            width: double.infinity,
-                                            decoration: BoxDecoration(
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
-                                                border: Border.all(
-                                                    color: Colors.black12)),
-                                            padding: const EdgeInsets.all(12.0),
-                                            child: Column(
+                                  child: DataTable(
+                                    headingRowHeight: 40,
+                                    dataRowMinHeight: 60,
+                                    dataRowMaxHeight: 120,
+                                    columnSpacing: 20,
+                                    dividerThickness: 1,
+                                    columns: [
+                                      DataColumn(
+                                          label: Text('Sno',
+                                              style: GoogleFonts.rubik(
+                                                  fontWeight:
+                                                      FontWeight.bold))),
+                                      DataColumn(
+                                          label: Text('Name',
+                                              style: GoogleFonts.rubik(
+                                                  fontWeight:
+                                                      FontWeight.bold))),
+                                      DataColumn(
+                                          label: Text('Dosage',
+                                              style: GoogleFonts.rubik(
+                                                  fontWeight:
+                                                      FontWeight.bold))),
+                                      DataColumn(
+                                          label: Text('Frequency',
+                                              style: GoogleFonts.rubik(
+                                                  fontWeight:
+                                                      FontWeight.bold))),
+                                      DataColumn(
+                                          label: Text('Duration',
+                                              style: GoogleFonts.rubik(
+                                                  fontWeight:
+                                                      FontWeight.bold))),
+                                      DataColumn(
+                                          label: Text('Side Effects',
+                                              style: GoogleFonts.rubik(
+                                                  fontWeight:
+                                                      FontWeight.bold))),
+                                    ],
+                                    rows:
+                                        medicines.asMap().entries.map((entry) {
+                                      final int index = entry.key;
+                                      final Map<String, dynamic> medicine =
+                                          entry.value;
+                                      final List<String> sideEffects =
+                                          List<String>.from(
+                                              medicine['side_effects'] ?? []);
+
+                                      return DataRow(
+                                        cells: [
+                                          DataCell(Text('${index + 1}.')),
+                                          DataCell(
+                                              Text(medicine['name'] ?? '')),
+                                          DataCell(
+                                              Text(medicine['dosage'] ?? '')),
+                                          DataCell(Text(
+                                              medicine['frequency'] ?? '')),
+                                          DataCell(
+                                              Text(medicine['duration'] ?? '')),
+                                          DataCell(
+                                            Column(
                                               crossAxisAlignment:
                                                   CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                    "${medicines[index]["name"]}",
-                                                    style: GoogleFonts.rubik(
-                                                        color: Color.fromRGBO(
-                                                            0, 0, 0, 1),
-                                                        fontSize: 14,
-                                                        fontWeight:
-                                                            FontWeight.w400)),
-                                                Row(
-                                                  children: [
-                                                    Text(
-                                                        "${medicines[index]["dosage"]} - ",
-                                                        style:
-                                                            GoogleFonts.rubik(
-                                                                color: Color
-                                                                    .fromRGBO(
-                                                                        72,
-                                                                        72,
-                                                                        72,
-                                                                        1),
-                                                                fontSize: 14,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w400)),
-                                                    Text(
-                                                        "${medicines[index]["frequency"]}",
-                                                        style:
-                                                            GoogleFonts.rubik(
-                                                                color: Color
-                                                                    .fromRGBO(
-                                                                        72,
-                                                                        72,
-                                                                        72,
-                                                                        1),
-                                                                fontSize: 14,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w400)),
-                                                  ],
-                                                ),
-                                                Text(
-                                                    "${medicines[index]["side_effects"]}",
-                                                    style: GoogleFonts.rubik(
-                                                        color: Color.fromRGBO(
-                                                            72, 72, 72, 1),
-                                                        fontSize: 14,
-                                                        fontWeight:
-                                                            FontWeight.w400)),
-                                              ],
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children:
+                                                  sideEffects.map((effect) {
+                                                return Padding(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(vertical: 2.0),
+                                                  child: Text('• $effect'),
+                                                );
+                                              }).toList(),
                                             ),
                                           ),
-                                        );
-                                      },
-                                    ),
+                                        ],
+                                      );
+                                    }).toList(),
                                   ),
                                 ),
                               ),
