@@ -1,10 +1,10 @@
 import 'package:chatbot/controller/signupController.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
 import '../../../components/dropdown.dart';
 import '../../../components/input_field.dart' show MyTextField;
-import '../../../theme/apptheme.dart';
 import 'label_common.dart';
-import 'package:intl/intl.dart';
 
 class PersonalForm extends StatelessWidget {
   const PersonalForm({
@@ -117,18 +117,19 @@ class PersonalForm extends StatelessWidget {
           SizedBox(
             height: 20,
           ),
-          buildLable(context, "Emergency Contact (optional)"),
+          buildLable(context, "Emergency Contact (optional)",
+              isRequired: false),
           SizedBox(
             height: 8,
           ),
           MyTextField(
               textEditingController: controller.emergencyContactController,
-              validation: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Required';
-                }
-                return null;
-              },
+              // validation: (value) {
+              //   if (value == null || value.isEmpty) {
+              //     return 'Required';
+              //   }
+              //   return null;
+              // },
               hintText: 'Enter your number',
               color: const Color(0xff585A60)),
           SizedBox(

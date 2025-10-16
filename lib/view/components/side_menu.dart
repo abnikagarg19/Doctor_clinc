@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
-import '../../components/search_Textbox.dart';
 import '../../controller/chatController.dart';
 import '../../responsive.dart';
 import '../home/dashboard.dart';
@@ -101,15 +100,17 @@ class _DashboardState extends State<SideMenu> {
             ),
             Row(
               children: [
-                Expanded(
-                  child: Container(
-                    child: search_textbox(
-                      onsubmit: (String) {},
-                      hintText: "Search here...",
-                      onChanged: (String) {},
-                    ),
-                  ),
-                ),
+                /// Search Bar
+                // Expanded(
+                //   child: Container(
+                //     child: search_textbox(
+                //       onsubmit: (String) {},
+                //       hintText: "Search here...",
+                //       onChanged: (String) {},
+                //     ),
+                //   ),
+                // ),
+                ///
                 // SizedBox(width: 16),
                 // ElevatedButton.icon(
                 //   onPressed: () => Get.toNamed('/websocket'),
@@ -124,33 +125,35 @@ class _DashboardState extends State<SideMenu> {
                 SizedBox(
                   width: 40,
                 ),
-                Expanded(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Image.asset("assets/images/bell.png"),
-                      SizedBox(
-                        width: 40,
-                      ),
-                      Image.asset("assets/images/chat copy.png"),
-                      SizedBox(
-                        width: 40,
-                      ),
-                      Image.asset("assets/images/message.png"),
-                      SizedBox(
-                        width: 80,
-                      ),
-                      ClipRRect(
-                          borderRadius: BorderRadius.circular(50),
-                          child: Image.asset(
-                            "assets/images/aa.jpg",
-                            height: 40,
-                            width: 40,
-                            fit: BoxFit.cover,
-                          )),
-                    ],
-                  ),
-                )
+
+                /// Icon
+                // Expanded(
+                //   child: Row(
+                //     mainAxisAlignment: MainAxisAlignment.end,
+                //     children: [
+                //       Image.asset("assets/images/bell.png"),
+                //       SizedBox(
+                //         width: 40,
+                //       ),
+                //       Image.asset("assets/images/chat copy.png"),
+                //       SizedBox(
+                //         width: 40,
+                //       ),
+                //       Image.asset("assets/images/message.png"),
+                //       SizedBox(
+                //         width: 80,
+                //       ),
+                //       ClipRRect(
+                //           borderRadius: BorderRadius.circular(50),
+                //           child: Image.asset(
+                //             "assets/images/aa.jpg",
+                //             height: 40,
+                //             width: 40,
+                //             fit: BoxFit.cover,
+                //           )),
+                //     ],
+                //   ),
+                // )
               ],
             ),
             _buildSwitchPage(context, selectedIndex),

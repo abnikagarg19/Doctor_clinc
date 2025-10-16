@@ -1,10 +1,8 @@
 import 'package:chatbot/controller/signupController.dart';
 import 'package:flutter/material.dart';
-import '../../../components/dropdown.dart';
+
 import '../../../components/input_field.dart' show MyTextField;
-import '../../../theme/apptheme.dart';
 import 'label_common.dart';
-import 'package:intl/intl.dart';
 
 class ExperienceForm extends StatelessWidget {
   const ExperienceForm({
@@ -88,7 +86,7 @@ class ExperienceForm extends StatelessWidget {
             height: 8,
           ),
           MyTextField(
-              textEditingController: controller.emailController,
+              textEditingController: controller.languageSpoken,
               validation: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Required';

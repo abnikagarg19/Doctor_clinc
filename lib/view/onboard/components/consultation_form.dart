@@ -1,11 +1,9 @@
 import 'package:chatbot/controller/signupController.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
+
 import '../../../components/dropdown.dart';
 import '../../../components/input_field.dart' show MyTextField;
-import '../../../theme/apptheme.dart';
 import 'label_common.dart';
-import 'package:intl/intl.dart';
 
 class ConsultationForm extends StatelessWidget {
   const ConsultationForm({
@@ -20,14 +18,13 @@ class ConsultationForm extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         children: [
-          buildLable(context, "Available Days & Time"),
+          buildLable(context, "Available Days & Time", isRequired: false),
           SizedBox(
             height: 8,
           ),
           ReusableDropdown(
             /// items: controller.genderOptions,
             listmap: controller.selectedDays,
-
             selectedItem: "",
             onChanged: (newValue) {
               // setState(() {
@@ -50,7 +47,7 @@ class ConsultationForm extends StatelessWidget {
               Expanded(
                 child: MyTextField(
                     hintText: "Available from",
-                    readOnly: true,
+                    readOnly: false,
                     icon: const Icon(
                       CupertinoIcons.clock,
                       color: Color.fromRGBO(130, 130, 131, 1),
@@ -71,7 +68,7 @@ class ConsultationForm extends StatelessWidget {
               Expanded(
                 child: MyTextField(
                     hintText: "Available To",
-                    readOnly: true,
+                    readOnly: false,
                     icon: const Icon(
                       CupertinoIcons.clock,
                       color: Color.fromRGBO(130, 130, 131, 1),
@@ -87,7 +84,8 @@ class ConsultationForm extends StatelessWidget {
                     color: const Color(0xff585A60)),
               ),
             ],
-          ), SizedBox(
+          ),
+          SizedBox(
             height: 20,
           ),
           buildLable(context, "Consultation Duration (e.g., 15 mins)"),

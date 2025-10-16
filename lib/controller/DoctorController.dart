@@ -2,8 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:html' as html;
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:chatbot/service/home_repo.dart';
+import 'package:chatbot/utils/custom_print.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -12,11 +14,17 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
+import '../view/videocall/components/symptoms_modal.dart';
+import '../view/videocall/components/trained_mock_positions.dart';
+
 class Doctorcontroller extends GetxController {
   @override
   void onInit() {
     super.onInit();
     getMeeting();
+    loadImage();
+    updateSymptomsFromJson(mockSymptomJsonPayload);
+
     // update();
     //print(parameters["pageIndex"]);
   }
@@ -259,6 +267,60 @@ class Doctorcontroller extends GetxController {
     _isListeningManuallyStopped = true;
     _speechToText.stop(); // Use stop() for a graceful shutdown
     isCurrentBubbleActive = false;
+  }
+
+  ///for body mapping
+  ui.Image? bodyImage;
+  List<SymptomsModal> symptomsList = [];
+  Future<void> loadImage() async {
+    final imageData = await rootBundle.load("assets/images/fullBody.png");
+    final codec =
+        await ui.instantiateImageCodec(imageData.buffer.asUint8List());
+    final frame = await codec.getNextFrame();
+    bodyImage = frame.image;
+    successPrint("Image Loaded successfully");
+    update();
+  }
+
+  // In DoctorController.dart
+
+// ...
+
+  void updateSymptomsFromJson(String jsonPayLoad) {
+    List<SymptomsModal> newSymptoms = [];
+    final List<dynamic> decodedPayLoad = json.decode(jsonPayLoad);
+
+    for (var symptomData in decodedPayLoad) {
+      String bodyPart = symptomData['body_part']?.toLowerCase() ?? '';
+      String severityStr = symptomData['severity']?.toLowerCase() ?? 'moderate';
+
+      String description = symptomData['description'] ?? 'No description.';
+
+      if (bodyPartCoordinates.containsKey(bodyPart)) {
+        PainSeverity painSeverity;
+        switch (severityStr) {
+          case "mild":
+            painSeverity = PainSeverity.mild;
+            break;
+          case "high":
+          case 'severe':
+            painSeverity = PainSeverity.high;
+            break;
+          default:
+            painSeverity = PainSeverity.moderate;
+        }
+        final Offset position = bodyPartCoordinates[bodyPart]!;
+
+        newSymptoms.add(SymptomsModal(
+            relativePosition: position,
+            painSeverity: painSeverity,
+            description: description));
+      }
+    }
+
+    symptomsList = newSymptoms;
+    successPrint("Symptoms list updated with ${symptomsList.length} items.");
+    update();
   }
 
   @override

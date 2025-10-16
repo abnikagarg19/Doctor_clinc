@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:chatbot/controller/DoctorController.dart';
 import 'package:chatbot/utils/custom_print.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -11,6 +12,7 @@ import 'package:vad/vad.dart';
 
 import '../../theme/apptheme.dart';
 import '../../utils/constant.dart';
+import 'components/symptoms_bodyMap.dart';
 
 class OfflineConsultation extends StatefulWidget {
   const OfflineConsultation({super.key});
@@ -20,10 +22,16 @@ class OfflineConsultation extends StatefulWidget {
 }
 
 class _OfflineConsultationState extends State<OfflineConsultation>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
+  ///
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
   bool _isAiSpeaking = true;
+
+  ///zoom body image
+  late TransformationController _transformationController;
+  late AnimationController _zoomAnimationController;
+  Animation<Matrix4>? _animation;
 
   final _vadHandler = VadHandler.create(isDebug: true);
 
@@ -37,39 +45,19 @@ class _OfflineConsultationState extends State<OfflineConsultation>
     "Lab Results",
     "Medications"
   ];
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-        vsync: this, duration: Duration(milliseconds: 1500));
-
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.15).animate(
-        CurvedAnimation(parent: _animationController, curve: Curves.easeInOut));
-
-    // startAnimation();
-
-    // final ws = OfflineService(
-    //   url: "wss://api.carepal.in/api/v1/voice_agent/ws",
-    //   token: PreferenceUtils.getUserToken(),
-    // );
-
-// pick file with <input type="file"> in Flutter web
-    // FileUploadInputElement upload = FileUploadInputElement();
-    // upload.accept = ".wav";
-    // upload.click();
-
-    // upload.onChange.listen((event) async {
-    //   final file = upload.files!.first;
-    //   await ws.sendAudio(file);
-    // });
-
-// listen to responses
-    // ws.messageStream.listen((msg) {
-    //   print("📥 Stream message: $msg");
-    // });
-    //  _setupVadHandler();
-  }
+  // 4️⃣ Extract tests_ordered as a list
+  final List tests = [];
+  // 3️⃣ Extract medicines_prescribed as a list of names
+  final List medicines = [];
+  final TextEditingController _searchController = TextEditingController();
+  final List<String> messages = [];
+  // String patientSummary = "";
+  String doctor_suggestions = "";
+  // String lifestyle_recommendations = "";
+  String advicePlan = "";
+  String doctorImpression = "";
+  String doctor_impression_and_diagnosis = "";
+  double _currentScale = 1.0;
 
   void startAnimation() {
     setState(() {
@@ -86,7 +74,16 @@ class _OfflineConsultationState extends State<OfflineConsultation>
     _animationController.reset();
   }
 
-  List chatList = [];
+  /// Zoom function
+  void _animateZoom(Matrix4 end) {
+    _animation = Matrix4Tween(
+      begin: _transformationController.value,
+      end: end,
+    ).animate(
+      CurveTween(curve: Curves.easeOut).animate(_zoomAnimationController),
+    );
+    _zoomAnimationController.forward(from: 0);
+  }
 
   /// Convert samples → WAV bytes
   Future<Uint8List> saveSamplesAsWavBytes(
@@ -145,8 +142,6 @@ class _OfflineConsultationState extends State<OfflineConsultation>
 
     return buffer.buffer.asUint8List();
   }
-
-  String speakText = "Welcome!👋\n\nReady for a quick health check?";
 
   Future<void> _setupVadHandler() async {
     final controller = Doctorcontroller();
@@ -228,25 +223,65 @@ class _OfflineConsultationState extends State<OfflineConsultation>
   }
 
   @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+        vsync: this, duration: Duration(milliseconds: 1500));
+
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.15).animate(
+        CurvedAnimation(parent: _animationController, curve: Curves.easeInOut));
+
+    _transformationController = TransformationController();
+    _transformationController.addListener(() {
+      setState(() {
+        // Update our state variable with the new scale value
+        _currentScale = _transformationController.value.getMaxScaleOnAxis();
+      });
+    });
+    _zoomAnimationController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 200))
+          ..addListener(
+            () {
+              _transformationController.value = _animation!.value;
+            },
+          );
+    Get.put<Doctorcontroller>(Doctorcontroller());
+
+    // final ws = OfflineService(
+    //   url: "wss://api.carepal.in/api/v1/voice_agent/ws",
+    //   token: PreferenceUtils.getUserToken(),
+    // );
+
+// pick file with <input type="file"> in Flutter web
+    // FileUploadInputElement upload = FileUploadInputElement();
+    // upload.accept = ".wav";
+    // upload.click();
+
+    // upload.onChange.listen((event) async {
+    //   final file = upload.files!.first;
+    //   await ws.sendAudio(file);
+    // });
+
+// listen to responses
+    // ws.messageStream.listen((msg) {
+    //   print("📥 Stream message: $msg");
+    // });
+    //  _setupVadHandler();
+  }
+
+  @override
   void dispose() {
+    _transformationController.dispose();
+    _zoomAnimationController.dispose();
     _vadHandler.dispose();
     super.dispose();
   }
 
-  // 4️⃣ Extract tests_ordered as a list
-  final List tests = [];
-  // 3️⃣ Extract medicines_prescribed as a list of names
-  final List medicines = [];
-  final TextEditingController _searchController = TextEditingController();
-  final List<String> messages = [];
-  String patientSummary = "";
-  String doctor_suggestions = "";
-  String lifestyle_recommendations = "";
-  String advicePlan = "";
-  String doctorImpression = "";
-  String doctor_impression_and_diagnosis = "";
   @override
   Widget build(BuildContext context) {
+    String patientSummary = "Patient experiencing multiple symptoms.";
+    String lifestyle_recommendations = "Rest and drink plenty of fluids.";
+
     final controller = Get.put<Doctorcontroller>(Doctorcontroller());
     return Expanded(
       child: Column(
@@ -661,78 +696,183 @@ class _OfflineConsultationState extends State<OfflineConsultation>
                               decoration: BoxDecoration(
                                 color: const Color.fromRGBO(255, 255, 255, 1),
                               ),
-                              child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      children: [
-                                        Expanded(
-                                          child: Column(
+                              child: GetBuilder<Doctorcontroller>(
+                                builder: (cntrl) {
+                                  return SingleChildScrollView(
+                                    child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        children: [
+                                          Row(
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
                                             mainAxisAlignment:
                                                 MainAxisAlignment.start,
                                             children: [
-                                              Text("Patient:",
-                                                  style: GoogleFonts.rubik(
-                                                      color:
-                                                          AppTheme.blackColor,
-                                                      fontSize:
-                                                          Constant.twetysixtext(
-                                                              context),
-                                                      fontWeight:
-                                                          FontWeight.w700)),
-                                              SizedBox(
-                                                height: 20,
+                                              Expanded(
+                                                flex: 3,
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.start,
+                                                  children: [
+                                                    Text("Patient:",
+                                                        style: GoogleFonts.rubik(
+                                                            color: AppTheme
+                                                                .blackColor,
+                                                            fontSize: Constant
+                                                                .twetysixtext(
+                                                                    context),
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .w700)),
+                                                    SizedBox(
+                                                      height: 20,
+                                                    ),
+                                                    Text(patientSummary,
+                                                        style: GoogleFonts
+                                                            .quicksand(
+                                                                color: AppTheme
+                                                                    .blackColor,
+                                                                fontSize: 12,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w500)),
+                                                    SizedBox(
+                                                      height: 20,
+                                                    ),
+                                                    Text("Description:",
+                                                        style: GoogleFonts.rubik(
+                                                            color: AppTheme
+                                                                .blackColor,
+                                                            fontSize: Constant
+                                                                .smallbody(
+                                                                    context),
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .w700)),
+                                                    SizedBox(
+                                                      height: 10,
+                                                    ),
+                                                    Text(
+                                                        lifestyle_recommendations,
+                                                        style: GoogleFonts
+                                                            .quicksand(
+                                                                color: AppTheme
+                                                                    .blackColor,
+                                                                fontSize: 12,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w500)),
+                                                  ],
+                                                ),
                                               ),
-                                              Text(patientSummary,
-                                                  style: GoogleFonts.quicksand(
-                                                      color:
-                                                          AppTheme.blackColor,
-                                                      fontSize: 12,
-                                                      fontWeight:
-                                                          FontWeight.w500)),
                                               SizedBox(
-                                                height: 20,
+                                                width: 20,
                                               ),
-                                              SizedBox(
-                                                height: 20,
-                                              ),
-                                              Text("Description:",
-                                                  style: GoogleFonts.rubik(
-                                                      color:
-                                                          AppTheme.blackColor,
-                                                      fontSize:
-                                                          Constant.smallbody(
-                                                              context),
-                                                      fontWeight:
-                                                          FontWeight.w700)),
-                                              SizedBox(
-                                                height: 10,
-                                              ),
-                                              Text(lifestyle_recommendations,
-                                                  style: GoogleFonts.quicksand(
-                                                      color:
-                                                          AppTheme.blackColor,
-                                                      fontSize: 12,
-                                                      fontWeight:
-                                                          FontWeight.w500)),
+                                              if (cntrl.bodyImage != null)
+                                                Expanded(
+                                                  flex: 7,
+                                                  child: Column(
+                                                    children: [
+                                                      SizedBox(
+                                                        height: 350,
+                                                        child:
+                                                            InteractiveViewer(
+                                                          minScale: 1.0,
+                                                          maxScale: 4.0,
+                                                          transformationController:
+                                                              _transformationController,
+                                                          child: SymptomBodyMap(
+                                                              controller
+                                                                  .symptomsList,
+                                                              controller
+                                                                  .bodyImage!),
+                                                        ),
+                                                      ),
+                                                      SizedBox(height: 8),
+                                                      Row(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .center,
+                                                        children: [
+                                                          if (_currentScale >
+                                                              1.0)
+                                                            IconButton(
+                                                              icon: Icon(Icons
+                                                                  .zoom_out),
+                                                              onPressed: () {
+                                                                final currentScale =
+                                                                    _transformationController
+                                                                        .value
+                                                                        .getMaxScaleOnAxis();
+                                                                // You can simplify the target scale calculation
+                                                                final newScale =
+                                                                    (currentScale /
+                                                                            1.5)
+                                                                        .clamp(
+                                                                            1.0,
+                                                                            4.0); // Clamp to prevent going below 1.0
+                                                                _animateZoom(Matrix4
+                                                                    .identity()
+                                                                  ..scale(
+                                                                      newScale));
+                                                              },
+                                                            )
+                                                          else
+                                                            SizedBox.shrink(),
+                                                          if (_currentScale >
+                                                              1.0)
+                                                            IconButton(
+                                                              icon: Icon(Icons
+                                                                  .zoom_in_map_rounded),
+                                                              tooltip:
+                                                                  "Reset View",
+                                                              onPressed: () {
+                                                                _animateZoom(Matrix4
+                                                                    .identity());
+                                                              },
+                                                            )
+                                                          else
+                                                            SizedBox.shrink(),
+                                                          IconButton(
+                                                            icon: Icon(
+                                                              Icons.zoom_in,
+                                                              color:
+                                                                  Colors.blue,
+                                                            ),
+                                                            onPressed: () {
+                                                              final currentScale =
+                                                                  _transformationController
+                                                                      .value
+                                                                      .getMaxScaleOnAxis();
+                                                              if (currentScale >=
+                                                                  4.0) return;
+                                                              final newScale =
+                                                                  currentScale *
+                                                                      1.5;
+                                                              _animateZoom(Matrix4
+                                                                  .identity()
+                                                                ..scale(
+                                                                    newScale));
+                                                            },
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ],
+                                                  ),
+                                                )
+                                              else
+                                                CircularProgressIndicator(),
                                             ],
                                           ),
-                                        ),
-                                        SizedBox(
-                                          width: 80,
-                                        ),
-                                        Image.asset(
-                                            "assets/images/full_body.png")
-                                      ],
-                                    ),
-                                  ])),
+                                        ]),
+                                  );
+                                },
+                              )),
                         ),
                       ],
                     ),
@@ -1071,10 +1211,13 @@ class _OfflineConsultationState extends State<OfflineConsultation>
                                   mainAxisAlignment: MainAxisAlignment.start,
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      "Vitals",
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold),
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Text(
+                                        "Vitals",
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold),
+                                      ),
                                     ),
                                     SizedBox(
                                       height: 10,
@@ -1176,10 +1319,13 @@ class _OfflineConsultationState extends State<OfflineConsultation>
                                   mainAxisAlignment: MainAxisAlignment.start,
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      "Doctor Impression and diagnosis",
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold),
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Text(
+                                        "Doctor Impression and diagnosis",
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold),
+                                      ),
                                     ),
                                     SizedBox(
                                       height: 10,

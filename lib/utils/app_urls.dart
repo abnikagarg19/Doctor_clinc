@@ -6,6 +6,7 @@ class AppUrls {
   static const String login = "/api/v1/doctor/login";
   static const String signUp = "/api/v1/doctor/create_health_practioner/";
   static const String otpVerify = "/api/v1/doctor/otp_verify/";
+  static const String sendOtp = "/api/v1/doctor/send_otp/";
   static const String forgetPassword = "/api/v1/auth/forget-password";
   static const String otpVerifyForgot = "/api/v1/auth/verify-otp";
   static const String changePassword = "/api/v1/auth/update-password";

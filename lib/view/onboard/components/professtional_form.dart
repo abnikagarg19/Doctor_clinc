@@ -2,6 +2,7 @@ import 'package:chatbot/controller/signupController.dart';
 import 'package:chatbot/view/onboard/components/upload_input.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../../../components/input_field.dart' show MyTextField;
 import '../../../theme/apptheme.dart';
 import '../../../utils/constant.dart';
@@ -90,11 +91,9 @@ class ProfesstionalForm extends StatelessWidget {
                 }
                 return null;
               },
-              readOnly: true,
               ontap: () {
                 // Call this in the select year button.
-
-             },
+              },
               hintText: 'YYYY',
               color: const Color(0xff585A60)),
           SizedBox(

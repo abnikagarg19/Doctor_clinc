@@ -1,10 +1,8 @@
 import 'package:chatbot/controller/signupController.dart';
 import 'package:flutter/material.dart';
-import '../../../components/dropdown.dart';
+
 import '../../../components/input_field.dart' show MyTextField;
-import '../../../theme/apptheme.dart';
 import 'label_common.dart';
-import 'package:intl/intl.dart';
 
 class OtherForm extends StatelessWidget {
   const OtherForm({
@@ -19,7 +17,7 @@ class OtherForm extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         children: [
-          buildLable(context, "LinkedIn Profile"),
+          buildLable(context, "LinkedIn Profile", isRequired: false),
           SizedBox(
             height: 8,
           ),
@@ -36,7 +34,8 @@ class OtherForm extends StatelessWidget {
           SizedBox(
             height: 20,
           ),
-          buildLable(context, "Professional Website or Profile"),
+          buildLable(context, "Professional Website or Profile",
+              isRequired: false),
           SizedBox(
             height: 8,
           ),
@@ -53,7 +52,8 @@ class OtherForm extends StatelessWidget {
           SizedBox(
             height: 20,
           ),
-          buildLable(context, "Reference from Another Doctor "),
+          buildLable(context, "Reference from Another Doctor",
+              isRequired: false),
           SizedBox(
             height: 8,
           ),
@@ -70,8 +70,7 @@ class OtherForm extends StatelessWidget {
           SizedBox(
             height: 20,
           ),
-          buildLable(context, "Any Awards / Recognitions"),
-         
+          buildLable(context, "Any Awards / Recognitions", isRequired: false),
           SizedBox(
             height: 8,
           ),
@@ -85,11 +84,10 @@ class OtherForm extends StatelessWidget {
               },
               hintText: 'Mention all of them',
               color: const Color(0xff585A60)),
-                SizedBox(
+          SizedBox(
             height: 20,
           ),
-          buildLable(context, "Publications"),
-         
+          buildLable(context, "Publications", isRequired: false),
           SizedBox(
             height: 8,
           ),

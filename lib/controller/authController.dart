@@ -2,15 +2,13 @@ import 'dart:convert';
 
 import 'package:chatbot/service/auth_service.dart';
 import 'package:chatbot/utils/app_routes.dart';
-import 'package:chatbot/view/home.dart';
+import 'package:chatbot/utils/custom_print.dart';
 import 'package:chatbot/view/reset_password.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../components/commons.dart';
 import '../service/shared_pref.dart';
-import '../videocall/join_screen.dart';
-import '../view/components/side_menu.dart';
 import '../view/otp_forget.dart';
 
 class AuthController extends GetxController {
@@ -27,18 +25,21 @@ class AuthController extends GetxController {
   }
 
   final service = AuthService();
+  final RxMap<String, dynamic> userProfile = RxMap<String, dynamic>();
 
   login() {
     DialogHelper.showLoading();
     service.apiLoginService(email.text, password.text).then((value) {
-      print(value.statusCode);
+      alertPrint("Status Code ${value.statusCode}");
       DialogHelper.hideLoading();
       switch (value.statusCode) {
         case 200:
           var data2 = jsonDecode(value.body);
-          print(value.body);
+          successPrint(value.body);
+
           //var data2 = jsonDecode(value.data);
           if (data2["status"]) {
+            userProfile.value = data2['data'];
             PreferenceUtils.setString("email", email.text.toString());
             PreferenceUtils.setString(
                 "id", data2["data"]["user_id"].toString());

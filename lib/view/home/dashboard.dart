@@ -20,27 +20,18 @@ class Dashboard extends StatefulWidget {
 }
 
 class _DashboardState extends State<Dashboard> {
-  @override
-  Widget build(BuildContext context) {
-    return _buildWidget(context);
-  }
-
   final DateFormat dateFormat = DateFormat('EEEE, d MMM yyyy');
-
   List<DateTime> getNext7Days() {
     DateTime today = DateTime.now();
     return List.generate(10, (index) => today.add(Duration(days: index)));
   }
 
   final _controller = Get.put<Doctorcontroller>(Doctorcontroller());
-
   int selectedIndex = 0;
-
   int selectTimeSlotIndex = 0;
   final List<DateTime> dates =
       List.generate(30, (i) => DateTime.now().add(Duration(days: i - 7)));
   final DateTime today = DateTime.now();
-
   String date = "";
   late List<_ChartData> data;
   late TooltipBehavior _tooltip;
@@ -65,8 +56,17 @@ class _DashboardState extends State<Dashboard> {
     setState(() {});
   }
 
+  @override
+  Widget build(BuildContext context) {
+    return _buildWidget(context);
+  }
+
   _buildWidget(context) {
+    final DateTime dateTime = DateTime.now();
+    final String formattedTime = DateFormat('HH:MM').format(dateTime);
+    final String formattedDate = DateFormat('dd-MMM-yy').format(dateTime);
     List<DateTime> dates = getNext7Days();
+
     return GetBuilder<Doctorcontroller>(builder: (controller) {
       return Expanded(
         /// constraints: BoxConstraints(maxWidth: 500, minWidth: 400),
@@ -124,7 +124,10 @@ class _DashboardState extends State<Dashboard> {
                                           children: [
                                             Image.asset(
                                                 "assets/images/time.png"),
-                                            Text("  10:00 AM",
+                                            SizedBox(
+                                              width: 5,
+                                            ),
+                                            Text(formattedTime,
                                                 style: GoogleFonts.rubik(
                                                   color: AppTheme.blackColor,
                                                   fontSize: Constant.smallbody(
@@ -140,7 +143,10 @@ class _DashboardState extends State<Dashboard> {
                                           children: [
                                             Image.asset(
                                                 "assets/images/cal.png"),
-                                            Text("  26-06-2025",
+                                            SizedBox(
+                                              width: 5,
+                                            ),
+                                            Text(formattedDate,
                                                 style: GoogleFonts.rubik(
                                                   color: AppTheme.blackColor,
                                                   fontSize: Constant.smallbody(

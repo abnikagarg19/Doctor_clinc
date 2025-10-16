@@ -2,18 +2,16 @@ import 'package:chatbot/responsive.dart';
 import 'package:chatbot/utils/app_routes.dart';
 import 'package:chatbot/utils/constant.dart';
 import 'package:chatbot/utils/social_logins.dart';
-import 'package:chatbot/view/home/dashboard.dart' show Dashboard;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../components/button.dart';
 import '../components/input_field.dart';
 import '../controller/authController.dart';
 import '../theme/apptheme.dart';
-import 'components/side_menu.dart';
-import 'forget_password.dart';
 
 class Login extends StatelessWidget {
   Login({super.key});
@@ -230,7 +228,6 @@ class Login extends StatelessWidget {
                                 child: Button(
                                     tittle: "Log In",
                                     tap: () {
-
                                       if (loginformKey.currentState!
                                           .validate()) {
                                         //   Get.to(AiChatBot());
@@ -275,6 +272,7 @@ class Login extends StatelessWidget {
                             children: [
                               SocialLogin(
                                 assets: socialLogis[0]["logo"],
+                                onTap: () {},
                                 webview: socialLogis[0]["webview"],
                               ),
                               SizedBox(
@@ -282,6 +280,7 @@ class Login extends StatelessWidget {
                               ),
                               SocialLogin(
                                 assets: socialLogis[1]["logo"],
+                                onTap: () {},
                                 webview: socialLogis[1]["webview"],
                               ),
                             ],

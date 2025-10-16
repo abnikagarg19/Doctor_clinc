@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
+
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
@@ -43,6 +43,21 @@ class AuthService {
           headers: {
             "content-type": "application/json",
           });
+      if (kDebugMode) {
+        print(response.body);
+      }
+      return Response(statusCode: response.statusCode, body: response.body);
+    } on SocketException catch (e) {
+      return Response(statusCode: 1, statusText: noInternetMessage);
+    }
+  }
+
+  Future<Response> apiSendOtpService(String? emailId) async {
+    var ur = Uri.parse(AppUrls.BASE_URL + AppUrls.sendOtp);
+    try {
+      final response = await http.get(ur, headers: {
+        "content-type": "application/json",
+      });
       if (kDebugMode) {
         print(response.body);
       }

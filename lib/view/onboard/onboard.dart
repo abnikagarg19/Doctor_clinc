@@ -1,21 +1,13 @@
 import 'package:chatbot/controller/signupController.dart';
 import 'package:chatbot/responsive.dart';
-import 'package:chatbot/utils/app_routes.dart';
 import 'package:chatbot/utils/constant.dart';
-import 'package:chatbot/utils/social_logins.dart';
 import 'package:chatbot/view/onboard/components/bank_form.dart';
 import 'package:chatbot/view/onboard/components/consultation_form.dart';
-import 'package:chatbot/view/onboard/components/label_common.dart';
 import 'package:chatbot/view/onboard/components/other_form.dart';
-
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../components/input_field.dart';
-import '../../controller/authController.dart';
 import '../../theme/apptheme.dart';
 import 'components/experience_form.dart';
 import 'components/personal_form.dart';
@@ -41,7 +33,7 @@ class OnboardPage extends StatelessWidget {
   }
 
   _buildLoginWidget(context, width) {
-    return GetBuilder<SignUpController>(builder: (_controller) {
+    return GetBuilder<SignUpController>(builder: (controller) {
       return LayoutBuilder(
           // If our width is more than 1100 then we consider it a desktop
           builder: (context, constraints) {
@@ -110,7 +102,7 @@ class OnboardPage extends StatelessWidget {
                                           height: 40,
                                         ),
                                         Text(
-                                            "${_controller.onBoard[_controller.currentStep]}",
+                                            "${controller.onBoard[controller.currentStep]}",
                                             style: GoogleFonts.rubik(
                                               color: AppTheme.blackColor,
                                               fontSize:
@@ -120,10 +112,8 @@ class OnboardPage extends StatelessWidget {
                                         SizedBox(
                                           height: 40,
                                         ),
-                                        _buildSwitchPage(
-                                            context,
-                                            _controller.currentStep,
-                                            _controller),
+                                        _buildSwitchPage(context,
+                                            controller.currentStep, controller),
                                         //  PersonalForm(controller: _controller),
                                         SizedBox(
                                           height: 40,
@@ -132,39 +122,44 @@ class OnboardPage extends StatelessWidget {
                                           mainAxisAlignment:
                                               MainAxisAlignment.end,
                                           children: [
-                                            if(_controller.currentStep>0)
-                                            GestureDetector(
-                                              onTap: () {
-                                                _controller.goToPreviousStep();
-                                              },
-                                              child: Container(
-                                                  height: 50,
-                                                  width: 150,
-                                                  decoration: BoxDecoration(
-                                                      color: Color.fromRGBO(142, 142, 142, 1),
+                                            if (controller.currentStep > 0)
+                                              GestureDetector(
+                                                onTap: () {
+                                                  controller.goToPreviousStep();
+                                                },
+                                                child: Container(
+                                                    height: 50,
+                                                    width: 150,
+                                                    decoration: BoxDecoration(
+                                                        color: Color.fromRGBO(
+                                                            142, 142, 142, 1),
 
-                                                      /// ),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              22)),
-                                                  child: Center(
-                                                    child: Text(
-                                                      "Back",
-                                                      style: GoogleFonts.inter(
-                                                          fontSize: Constant
-                                                              .mediumbody(
-                                                                  context),
-                                                          color: AppTheme
-                                                              .whiteBackgroundColor,
-                                                          fontWeight:
-                                                              FontWeight.w500),
-                                                    ),
-                                                  )),
+                                                        /// ),
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(22)),
+                                                    child: Center(
+                                                      child: Text(
+                                                        "Back",
+                                                        style: GoogleFonts.inter(
+                                                            fontSize: Constant
+                                                                .mediumbody(
+                                                                    context),
+                                                            color: AppTheme
+                                                                .whiteBackgroundColor,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .w500),
+                                                      ),
+                                                    )),
+                                              ),
+                                            SizedBox(
+                                              width: 20,
                                             ),
-                                            SizedBox(width: 20,),
                                             GestureDetector(
                                               onTap: () {
-                                                _controller.goToNextStep();
+                                                controller
+                                                    .goToNextStep(loginformKey);
                                               },
                                               child: Container(
                                                   height: 50,
@@ -179,7 +174,12 @@ class OnboardPage extends StatelessWidget {
                                                               22)),
                                                   child: Center(
                                                     child: Text(
-                                                      "Next",
+                                                      controller.currentStep <
+                                                              controller.onBoard
+                                                                      .length -
+                                                                  1
+                                                          ? "Next"
+                                                          : "Submit",
                                                       style: GoogleFonts.inter(
                                                           fontSize: Constant
                                                               .mediumbody(
@@ -216,7 +216,6 @@ class OnboardPage extends StatelessWidget {
   }
 
   _buildSwitchPage(context, selectIndex, SignUpController _controller) {
-   
     switch (selectIndex) {
       case 0:
         return PersonalForm(

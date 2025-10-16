@@ -2,15 +2,15 @@ import 'package:chatbot/controller/signupController.dart';
 import 'package:chatbot/responsive.dart';
 import 'package:chatbot/utils/constant.dart';
 import 'package:chatbot/utils/social_logins.dart';
-import 'package:chatbot/view/onboard/onboard.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../components/button.dart';
-import '../components/input_field.dart';
 
+import '../components/button.dart';
+import '../components/commons.dart';
+import '../components/input_field.dart';
 import '../theme/apptheme.dart';
 
 class SignUpPage extends StatelessWidget {
@@ -54,16 +54,16 @@ class SignUpPage extends StatelessWidget {
             child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                   if (constraints.maxWidth > 800)
-                Expanded(
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Image.asset(
-                      "assets/images/aoenlyf.png",
-                      // height: 150,
+                  if (constraints.maxWidth > 800)
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Image.asset(
+                          "assets/images/aoenlyf.png",
+                          // height: 150,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
                   Expanded(
                     /// constraints: BoxConstraints(maxWidth: 500, minWidth: 400),
                     child: Column(
@@ -75,8 +75,7 @@ class SignUpPage extends StatelessWidget {
                       children: [
                         if (constraints.maxWidth < 900)
                           Container(
-                           height: 60,
-                            
+                            height: 60,
                           ),
                         Form(
                           key: loginformKey,
@@ -89,8 +88,8 @@ class SignUpPage extends StatelessWidget {
                                   Text('Welcome Onboard!',
                                       style: GoogleFonts.rubik(
                                         color: AppTheme.blackColor,
-                                        fontSize: Constant.textfourtyeight(
-                                            context),
+                                        fontSize:
+                                            Constant.textfourtyeight(context),
                                         fontWeight: FontWeight.w700,
                                       )),
                                 ],
@@ -111,7 +110,14 @@ class SignUpPage extends StatelessWidget {
                                       return 'Enter Valid email';
                                     }
                                     return null;
-                                  },labelText: 'Email', preicon: SvgPicture.asset("assets/svg/mail.svg",height: 10, fit: BoxFit.scaleDown,alignment: Alignment.center,),
+                                  },
+                                  labelText: 'Email',
+                                  preicon: SvgPicture.asset(
+                                    "assets/svg/mail.svg",
+                                    height: 10,
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.center,
+                                  ),
                                   hintText: "Enter your Email",
                                   color: const Color(0xff585A60)),
                               SizedBox(
@@ -119,8 +125,7 @@ class SignUpPage extends StatelessWidget {
                               ),
                               MyTextField(
                                   isSuffixIcon: true,
-                                  textEditingController:
-                                      _controller.password,
+                                  textEditingController: _controller.password,
                                   obsecureText:
                                       !_controller.passwordLoginVisibility,
                                   ontapSuffix: () {
@@ -132,14 +137,19 @@ class SignUpPage extends StatelessWidget {
                                     }
                                     return null;
                                   },
-                                   preicon: SvgPicture.asset("assets/svg/lock.svg", height: 15,width: 15,fit: BoxFit.scaleDown,),
+                                  preicon: SvgPicture.asset(
+                                    "assets/svg/lock.svg",
+                                    height: 15,
+                                    width: 15,
+                                    fit: BoxFit.scaleDown,
+                                  ),
                                   labelText: 'Password',
                                   hintText: 'Enter your password',
                                   color: const Color(0xff585A60)),
                               SizedBox(
                                 height: 30,
                               ),
-        
+
                               MyTextField(
                                   isSuffixIcon: true,
                                   textEditingController:
@@ -153,10 +163,19 @@ class SignUpPage extends StatelessWidget {
                                     if (value == null || value.isEmpty) {
                                       return 'Required';
                                     }
+                                    if (_controller.password.text !=
+                                        _controller.confirmpassword.text) {
+                                      return 'Passwords do not match';
+                                    }
                                     return null;
                                   },
-                                  preicon: SvgPicture.asset("assets/svg/lock.svg", height: 15,width: 15,fit: BoxFit.scaleDown,),
-                                   labelText: 'Re-enter Password',
+                                  preicon: SvgPicture.asset(
+                                    "assets/svg/lock.svg",
+                                    height: 15,
+                                    width: 15,
+                                    fit: BoxFit.scaleDown,
+                                  ),
+                                  labelText: 'Re-enter Password',
                                   hintText: 'Re-enter Password',
                                   color: const Color(0xff585A60)),
                               // SizedBox(
@@ -174,7 +193,7 @@ class SignUpPage extends StatelessWidget {
                               //           value: _controller.isRemember,
                               //           activeColor:
                               //               AppTheme.lightPrimaryColor,
-        
+
                               //           onChanged: (value) {},
                               //         ),
                               //       ),
@@ -227,7 +246,14 @@ class SignUpPage extends StatelessWidget {
                                 child: Button(
                                     tittle: "Signup",
                                     tap: () {
-                                      Get.to(OnboardPage());
+                                      if (loginformKey.currentState!
+                                          .validate()) {
+                                        _controller
+                                            .sendOtp(_controller.email.text);
+                                      } else {
+                                        DialogHelper.showErroDialog();
+                                      }
+
                                       // if (loginformKey.currentState!
                                       //     .validate()) {
                                       //   //   Get.to(AiChatBot());
@@ -249,8 +275,7 @@ class SignUpPage extends StatelessWidget {
                             children: [
                               Expanded(child: Divider()),
                               Padding(
-                                padding:
-                                    EdgeInsets.symmetric(horizontal: 8.0),
+                                padding: EdgeInsets.symmetric(horizontal: 8.0),
                                 child: Text("OR"),
                               ),
                               Expanded(child: Divider()),
@@ -269,6 +294,7 @@ class SignUpPage extends StatelessWidget {
                               Expanded(
                                 child: SocialLogin(
                                   assets: socialLogis[0]["logo"],
+                                  onTap: () {},
                                   webview: socialLogis[0]["webview"],
                                 ),
                               ),
@@ -278,6 +304,7 @@ class SignUpPage extends StatelessWidget {
                               Expanded(
                                 child: SocialLogin(
                                   assets: socialLogis[1]["logo"],
+                                  onTap: () {},
                                   webview: socialLogis[1]["webview"],
                                 ),
                               ),

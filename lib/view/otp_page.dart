@@ -1,15 +1,12 @@
-import 'dart:ui';
-
 import 'package:chatbot/controller/signupController.dart';
+import 'package:chatbot/utils/custom_print.dart';
 import 'package:flutter/material.dart';
-
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'dart:io' show Platform;
-import '../components/button.dart';
 import 'package:pinput/pinput.dart';
-import '../theme/apptheme.dart';
 
+import '../components/button.dart';
+import '../theme/apptheme.dart';
 
 class OtpPage extends StatelessWidget {
   OtpPage({
@@ -160,11 +157,14 @@ class OtpPage extends StatelessWidget {
                               ),
                               child: Button(
                                   tittle: "Continue",
-                                  tap: () {
+                                  tap: () async {
                                     if (loginformKey.currentState!.validate()) {
-                                      _controller.verifyOtp(
+                                      await _controller.verifyOtp(
                                           _controller.pinController.text,
                                           emailid);
+                                      alertPrint(
+                                          "Verified otp and user signed in successfully on button continue on verify otp page");
+                                      _controller.signUp();
                                     }
                                   }),
                             ),
