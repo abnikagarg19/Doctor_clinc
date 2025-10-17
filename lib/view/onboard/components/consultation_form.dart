@@ -1,5 +1,7 @@
 import 'package:chatbot/controller/signupController.dart';
+import 'package:chatbot/utils/custom_print.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 
 import '../../../components/dropdown.dart';
 import '../../../components/input_field.dart' show MyTextField;
@@ -18,7 +20,10 @@ class ConsultationForm extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         children: [
-          buildLable(context, "Available Days & Time", isRequired: false),
+          buildLable(
+            context,
+            "Available Days & Time",
+          ),
           SizedBox(
             height: 8,
           ),
@@ -26,6 +31,7 @@ class ConsultationForm extends StatelessWidget {
             /// items: controller.genderOptions,
             listmap: controller.selectedDays,
             selectedItem: "",
+
             onChanged: (newValue) {
               // setState(() {
               // controller.selectedValue = newValue!;
@@ -46,42 +52,59 @@ class ConsultationForm extends StatelessWidget {
             children: [
               Expanded(
                 child: MyTextField(
-                    hintText: "Available from",
-                    readOnly: false,
-                    icon: const Icon(
-                      CupertinoIcons.clock,
-                      color: Color.fromRGBO(130, 130, 131, 1),
-                    ),
-                    textEditingController: controller.availableFromController,
-                    validation: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "Required";
-                      }
-                      return null;
-                    },
-                    ontap: () async {},
-                    color: const Color(0xff585A60)),
+                  hintText: "Available from",
+                  readOnly: true,
+                  icon: const Icon(CupertinoIcons.clock),
+                  textEditingController: controller.availableFromController,
+                  validation: (value) => value!.isEmpty ? "Required" : null,
+                  ontap: () async {
+                    TimeOfDay? pickedTime = await showTimePicker(
+                      context: context,
+                      initialTime: TimeOfDay.now(),
+                    );
+                    if (pickedTime != null) {
+                      // --- CORRECTED FORMATTING ---
+                      // Format to HH:mm (24-hour format WITHOUT seconds)
+                      final localizations = MaterialLocalizations.of(context);
+                      final formattedTime = localizations.formatTimeOfDay(
+                          pickedTime,
+                          alwaysUse24HourFormat: true);
+                      controller.availableFromController.text = formattedTime;
+                    }
+                    alertPrint(
+                        'Available from ${controller.availableFromController.text}');
+                  },
+                  color: const Color(0xff585A60),
+                ),
               ),
               SizedBox(
                 width: 14,
               ),
               Expanded(
                 child: MyTextField(
-                    hintText: "Available To",
-                    readOnly: false,
-                    icon: const Icon(
-                      CupertinoIcons.clock,
-                      color: Color.fromRGBO(130, 130, 131, 1),
-                    ),
-                    textEditingController: controller.availableToController,
-                    validation: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "Required";
-                      }
-                      return null;
-                    },
-                    ontap: () async {},
-                    color: const Color(0xff585A60)),
+                  hintText: "Available To",
+                  readOnly: true,
+                  icon: const Icon(CupertinoIcons.clock),
+                  textEditingController: controller.availableToController,
+                  validation: (value) => value!.isEmpty ? "Required" : null,
+                  ontap: () async {
+                    TimeOfDay? pickedTime = await showTimePicker(
+                      context: context,
+                      initialTime: TimeOfDay.now(),
+                    );
+
+                    if (pickedTime != null) {
+                      final localizations = MaterialLocalizations.of(context);
+                      final formattedTime = localizations.formatTimeOfDay(
+                          pickedTime,
+                          alwaysUse24HourFormat: true);
+                      controller.availableToController.text = formattedTime;
+                    }
+                    alertPrint(
+                        'Available to ${controller.availableToController.text}');
+                  },
+                  color: const Color(0xff585A60),
+                ),
               ),
             ],
           ),

@@ -306,14 +306,16 @@ class _SettingsPageState extends State<SettingsPage> {
   late TextEditingController phoneController;
   @override
   void initState() {
-    nameController =
-        TextEditingController(text: authController.userProfile['name'] ?? '');
+    nameController = TextEditingController(
+        text: authController.userProfile['name'] ?? 'No Name');
     specialtyController = TextEditingController(
-        text: authController.userProfile['specialization'] ?? '');
-    emailController =
-        TextEditingController(text: authController.userProfile['email'] ?? '');
+        text: authController.userProfile['specialization'] ??
+            'No Specialization');
+    emailController = TextEditingController(
+        text: authController.userProfile['email'] ?? 'No Email');
     phoneController = TextEditingController(
-        text: authController.userProfile['mobile_number'] ?? '');
+        text:
+            authController.userProfile['mobile_number'] ?? 'No Mobile Number');
     super.initState();
   }
 
@@ -333,14 +335,13 @@ class _SettingsPageState extends State<SettingsPage> {
           const SizedBox(height: 20),
           SettingsTile(
             title: "Edit personal details (name, specialty, photo)",
-            initiallyExpanded: true, // Let's make the first one open by default
+            initiallyExpanded: true,
             child: Column(
               children: [
-                Text("Full Name ${authController.userProfile['name']}"),
+                Text(
+                    "Full Name : ${authController.userProfile['name'] ?? "No Name Found"}  "),
                 const SizedBox(height: 10),
-                Text("Full Name ${authController.userProfile['name']}"),
-                const SizedBox(height: 10),
-                Image.network(authController.userProfile[''])
+                Image.network(authController.userProfile[''] ?? "No Image")
               ],
             ),
           ),

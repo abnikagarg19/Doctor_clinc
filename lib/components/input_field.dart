@@ -73,7 +73,7 @@ class MyTextField extends StatelessWidget {
               //  prefixIcon: preicon,
               prefixIcon: preicon,
               // fillColor: Color.fromRGBO(255, 255, 255, 0.6),
-              // filled: isfilled, 
+              // filled: isfilled,
               hintStyle: GoogleFonts.rubik(
                   fontSize: Constant.smallbody(context),
                   color: AppTheme.lightHintTextColor,

@@ -1,18 +1,16 @@
-import 'dart:async';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:chatbot/controller/DoctorController.dart';
-import 'package:chatbot/utils/custom_print.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:vad/vad.dart';
 
+import '../../controller/chatController.dart';
+import '../../service/shared_pref.dart';
 import '../../theme/apptheme.dart';
 import '../../utils/constant.dart';
+import '../../utils/custom_print.dart';
 import 'components/symptoms_bodyMap.dart';
 import 'components/trained_mock_positions.dart';
 
@@ -28,7 +26,7 @@ class _OfflineConsultationState extends State<OfflineConsultation>
   ///
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
-  bool _isAiSpeaking = true;
+  bool _isAiSpeaking = false;
 
   ///zoom body image
   late TransformationController _transformationController;
@@ -87,143 +85,6 @@ class _OfflineConsultationState extends State<OfflineConsultation>
     _zoomAnimationController.forward(from: 0);
   }
 
-  /// Convert samples → WAV bytes
-  Future<Uint8List> saveSamplesAsWavBytes(
-    List<double> samples, {
-    int sampleRate = 16000,
-    int channels = 1,
-  }) async {
-    // Step 1: Convert Float [-1..1] → PCM16
-    final pcmBuffer = Int16List(samples.length);
-    for (int i = 0; i < samples.length; i++) {
-      final v = samples[i].clamp(-1.0, 1.0);
-      pcmBuffer[i] = (v * 32767).toInt();
-    }
-    final pcmBytes = pcmBuffer.buffer.asUint8List();
-
-    // Step 2: WAV header
-    final header = _buildWavHeader(
-      pcmBytes.length,
-      sampleRate,
-      channels,
-      16,
-    );
-
-    // Step 3: Combine
-    final wavBytes = BytesBuilder();
-    wavBytes.add(header);
-    wavBytes.add(pcmBytes);
-
-    return wavBytes.toBytes();
-  }
-
-  Uint8List _buildWavHeader(
-    int dataLength,
-    int sampleRate,
-    int channels,
-    int bitsPerSample,
-  ) {
-    final byteRate = sampleRate * channels * (bitsPerSample ~/ 8);
-    final blockAlign = channels * (bitsPerSample ~/ 8);
-    final chunkSize = 36 + dataLength;
-
-    final buffer = ByteData(44);
-    buffer.setUint32(0, 0x52494646, Endian.big); // "RIFF"
-    buffer.setUint32(4, chunkSize, Endian.little);
-    buffer.setUint32(8, 0x57415645, Endian.big); // "WAVE"
-    buffer.setUint32(12, 0x666d7420, Endian.big); // "fmt "
-    buffer.setUint32(16, 16, Endian.little); // Subchunk1Size (16 for PCM)
-    buffer.setUint16(20, 1, Endian.little); // AudioFormat (1=PCM)
-    buffer.setUint16(22, channels, Endian.little);
-    buffer.setUint32(24, sampleRate, Endian.little);
-    buffer.setUint32(28, byteRate, Endian.little);
-    buffer.setUint16(32, blockAlign, Endian.little);
-    buffer.setUint16(34, bitsPerSample, Endian.little);
-    buffer.setUint32(36, 0x64617461, Endian.big); // "data"
-    buffer.setUint32(40, dataLength, Endian.little);
-
-    return buffer.buffer.asUint8List();
-  }
-
-  Future<void> _setupVadHandler() async {
-    final controller = Doctorcontroller();
-    var status = await Permission.microphone.request();
-
-    if (status.isDenied || status.isPermanentlyDenied) {
-      warningPrint("Microphone permission denied by user or system.");
-      return;
-    }
-    _vadHandler.onSpeechStart.listen((_) {
-      alertPrint('Speech detected.');
-      setState(() => receivedEvents.add('Speech detected.'));
-    });
-
-    _vadHandler.onRealSpeechStart.listen((_) {
-      alertPrint('Real speech start detected (not a misfire).');
-      setState(() => receivedEvents.add('Real speech start detected.'));
-    });
-    _vadHandler.onVADMisfire.listen((_) {
-      alertPrint(
-          'onVADMisfire onVADMisfire onVADMisfire detected (not a misfire).');
-      setState(
-          () => receivedEvents.add('Real onVADMisfire onVADMisfire detected.'));
-    });
-
-    /// New
-    _vadHandler.onSpeechEnd.listen((List<double> samples) async {
-      alertPrint("Speech ended, processing transcription...");
-      warningPrint(
-          'Speech ended, first 10 samples: ${samples.take(10).toList()}');
-      setState(() {
-        receivedEvents.add(
-          'Speech ended, first 10 samples: ${samples.take(10).toList()}',
-        );
-      });
-
-      // ✅ Always get wavBytes
-      final wavBytes = await saveSamplesAsWavBytes(samples);
-
-      alertPrint("WAV ready in memory (${wavBytes.lengthInBytes} bytes)");
-      final transcribedText = await sendToSpeechToTextApi(wavBytes);
-      // ✅ Send to Sarvam AI
-      // await sendToSarvam(wavBytes);
-      if (transcribedText != null && transcribedText.isNotEmpty) {
-        setState(() {
-          controller.chatMessage.add({
-            "sender": controller.activeSpeaker,
-            "text": transcribedText,
-          });
-        });
-      }
-    });
-
-    _vadHandler.onFrameProcessed.listen((frameData) {
-      // debugPrint(
-      //   'Frame processed - Speech prob: ${frameData.isSpeech}, Not speech: ${frameData.notSpeech}',
-      // );
-    });
-
-    _vadHandler.onVADMisfire.listen((_) {
-      alertPrint('VAD misfire detected.');
-      setState(() => receivedEvents.add('VAD misfire detected.'));
-    });
-
-    _vadHandler.onError.listen((String message) {
-      alertPrint('Error: $message');
-      setState(() => receivedEvents.add('Error: $message'));
-    });
-    await _vadHandler.startListening(
-      submitUserSpeechOnPause: true,
-    );
-    // sendToChatApi("");
-  }
-
-  /// Dummy mock api
-  Future<String> sendToSpeechToTextApi(Uint8List wavBytes) async {
-    await Future.delayed(Duration(seconds: 2));
-    return "This is a sample transcribed text.";
-  }
-
   @override
   void initState() {
     super.initState();
@@ -247,28 +108,9 @@ class _OfflineConsultationState extends State<OfflineConsultation>
               _transformationController.value = _animation!.value;
             },
           );
-    Get.put<Doctorcontroller>(Doctorcontroller());
-
-    // final ws = OfflineService(
-    //   url: "wss://api.carepal.in/api/v1/voice_agent/ws",
-    //   token: PreferenceUtils.getUserToken(),
-    // );
-
-// pick file with <input type="file"> in Flutter web
-    // FileUploadInputElement upload = FileUploadInputElement();
-    // upload.accept = ".wav";
-    // upload.click();
-
-    // upload.onChange.listen((event) async {
-    //   final file = upload.files!.first;
-    //   await ws.sendAudio(file);
-    // });
-
-// listen to responses
-    // ws.messageStream.listen((msg) {
-    //   print("📥 Stream message: $msg");
-    // });
-    //  _setupVadHandler();
+    warningPrint("Offline page. Token: ${PreferenceUtils.getUserToken()}");
+    Get.put(Doctorcontroller());
+    Get.put(ChatController());
   }
 
   @override
@@ -284,7 +126,8 @@ class _OfflineConsultationState extends State<OfflineConsultation>
     String patientSummary = "Patient experiencing multiple symptoms.";
     String lifestyle_recommendations = "Rest and drink plenty of fluids.";
 
-    final controller = Get.put<Doctorcontroller>(Doctorcontroller());
+    final doctorController = Get.put<Doctorcontroller>(Doctorcontroller());
+    final chatController = Get.put<ChatController>(ChatController());
     return Expanded(
       child: Column(
         children: [
@@ -460,44 +303,12 @@ class _OfflineConsultationState extends State<OfflineConsultation>
 
                             if (_isAiSpeaking) {
                               startAnimation();
-
-                              // Start real-time speech-to-text
-                              await controller.startListening((text) {
-                                setState(() {
-                                  if (controller.chatMessage.isNotEmpty &&
-                                      controller.chatMessage.last['sender'] ==
-                                          controller.activeSpeaker) {
-                                    // Update last message if the speaker is same
-                                    controller.chatMessage[
-                                            controller.chatMessage.length - 1]
-                                        ['text'] = text;
-                                  } else {
-                                    // Add new message if last speaker is different
-                                    controller.chatMessage.add({
-                                      "sender": controller.activeSpeaker,
-                                      "text": text,
-                                    });
-                                  }
-                                });
-                              });
+                              chatController.startVoiceSession();
                             } else {
                               stopAiAnimation();
-                              controller.stopListening();
+                              chatController.stopVoiceSession();
                             }
                           },
-                          // onTap: () async {
-                          //                             setState(() {
-                          //                               _isAiSpeaking = !_isAiSpeaking;
-                          //                             });
-                          //                             if (_isAiSpeaking) {
-                          //                               startAnimation();
-                          //
-                          //                               await _setupVadHandler();
-                          //                             } else {
-                          //                               stopAiAnimation();
-                          //                               _vadHandler.stopListening();
-                          //                             }
-                          //                           },
                           child: ScaleTransition(
                               scale: _scaleAnimation,
                               child: Stack(
@@ -577,9 +388,10 @@ class _OfflineConsultationState extends State<OfflineConsultation>
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Obx(() => ListView.builder(
-                                itemCount: controller.chatMessage.length,
+                                controller: chatController.scrollController,
+                                itemCount: chatController.chatMessage.length,
                                 itemBuilder: (context, index) {
-                                  final msg = controller.chatMessage[index];
+                                  final msg = chatController.chatMessage[index];
                                   final isDoctor = msg["sender"] == "doctor";
                                   return Align(
                                     alignment: isDoctor
@@ -618,8 +430,8 @@ class _OfflineConsultationState extends State<OfflineConsultation>
                           children: [
                             ElevatedButton.icon(
                               onPressed: () async {
-                                await controller
-                                    .downloadChatPdfWeb(controller.chatMessage);
+                                await chatController.downloadChatPdfWeb(
+                                    chatController.chatMessage);
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                       content: Text(
@@ -803,10 +615,9 @@ class _OfflineConsultationState extends State<OfflineConsultation>
                                                           transformationController:
                                                               _transformationController,
                                                           child: SymptomBodyMap(
-                                                              controller
+                                                              cntrl
                                                                   .symptomsList,
-                                                              controller
-                                                                  .bodyImage!),
+                                                              cntrl.bodyImage!),
                                                         ),
                                                       ),
                                                       SizedBox(height: 8),
@@ -973,88 +784,88 @@ class _OfflineConsultationState extends State<OfflineConsultation>
                                   ),
                                 ),
                               ),
-                              Expanded(
-                                child: SingleChildScrollView(
-                                  child: DataTable(
-                                    headingRowHeight: 40,
-                                    dataRowMinHeight: 60,
-                                    dataRowMaxHeight: 120,
-                                    columnSpacing: 20,
-                                    dividerThickness: 1,
-                                    columns: [
-                                      DataColumn(
-                                          label: Text('Sno',
-                                              style: GoogleFonts.rubik(
-                                                  fontWeight:
-                                                      FontWeight.bold))),
-                                      DataColumn(
-                                          label: Text('Name',
-                                              style: GoogleFonts.rubik(
-                                                  fontWeight:
-                                                      FontWeight.bold))),
-                                      DataColumn(
-                                          label: Text('Dosage',
-                                              style: GoogleFonts.rubik(
-                                                  fontWeight:
-                                                      FontWeight.bold))),
-                                      DataColumn(
-                                          label: Text('Frequency',
-                                              style: GoogleFonts.rubik(
-                                                  fontWeight:
-                                                      FontWeight.bold))),
-                                      DataColumn(
-                                          label: Text('Duration',
-                                              style: GoogleFonts.rubik(
-                                                  fontWeight:
-                                                      FontWeight.bold))),
-                                      DataColumn(
-                                          label: Text('Side Effects',
-                                              style: GoogleFonts.rubik(
-                                                  fontWeight:
-                                                      FontWeight.bold))),
-                                    ],
-                                    rows:
-                                        medicines.asMap().entries.map((entry) {
-                                      final int index = entry.key;
-                                      final Map<String, dynamic> medicine =
-                                          entry.value;
-                                      final List<String> sideEffects =
-                                          List<String>.from(
-                                              medicine['side_effects'] ?? []);
-
-                                      return DataRow(
-                                        cells: [
-                                          DataCell(Text('${index + 1}.')),
-                                          DataCell(
-                                              Text(medicine['name'] ?? '')),
-                                          DataCell(
-                                              Text(medicine['dosage'] ?? '')),
-                                          DataCell(Text(
-                                              medicine['frequency'] ?? '')),
-                                          DataCell(
-                                              Text(medicine['duration'] ?? '')),
-                                          DataCell(
-                                            Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children:
-                                                  sideEffects.map((effect) {
-                                                return Padding(
-                                                  padding: const EdgeInsets
-                                                      .symmetric(vertical: 2.0),
-                                                  child: Text('• $effect'),
-                                                );
-                                              }).toList(),
-                                            ),
-                                          ),
-                                        ],
-                                      );
-                                    }).toList(),
-                                  ),
-                                ),
-                              ),
+                              // Expanded(
+                              //   child: SingleChildScrollView(
+                              //     child: DataTable(
+                              //       headingRowHeight: 40,
+                              //       dataRowMinHeight: 60,
+                              //       dataRowMaxHeight: 120,
+                              //       columnSpacing: 20,
+                              //       dividerThickness: 1,
+                              //       columns: [
+                              //         DataColumn(
+                              //             label: Text('Sno',
+                              //                 style: GoogleFonts.rubik(
+                              //                     fontWeight:
+                              //                         FontWeight.bold))),
+                              //         DataColumn(
+                              //             label: Text('Name',
+                              //                 style: GoogleFonts.rubik(
+                              //                     fontWeight:
+                              //                         FontWeight.bold))),
+                              //         DataColumn(
+                              //             label: Text('Dosage',
+                              //                 style: GoogleFonts.rubik(
+                              //                     fontWeight:
+                              //                         FontWeight.bold))),
+                              //         DataColumn(
+                              //             label: Text('Frequency',
+                              //                 style: GoogleFonts.rubik(
+                              //                     fontWeight:
+                              //                         FontWeight.bold))),
+                              //         DataColumn(
+                              //             label: Text('Duration',
+                              //                 style: GoogleFonts.rubik(
+                              //                     fontWeight:
+                              //                         FontWeight.bold))),
+                              //         DataColumn(
+                              //             label: Text('Side Effects',
+                              //                 style: GoogleFonts.rubik(
+                              //                     fontWeight:
+                              //                         FontWeight.bold))),
+                              //       ],
+                              //       rows:
+                              //           medicines.asMap().entries.map((entry) {
+                              //         final int index = entry.key;
+                              //         final Map<String, dynamic> medicine =
+                              //             entry.value;
+                              //         final List<String> sideEffects =
+                              //             List<String>.from(
+                              //                 medicine['side_effects'] ?? []);
+                              //
+                              //         return DataRow(
+                              //           cells: [
+                              //             DataCell(Text('${index + 1}.')),
+                              //             DataCell(
+                              //                 Text(medicine['name'] ?? '')),
+                              //             DataCell(
+                              //                 Text(medicine['dosage'] ?? '')),
+                              //             DataCell(Text(
+                              //                 medicine['frequency'] ?? '')),
+                              //             DataCell(
+                              //                 Text(medicine['duration'] ?? '')),
+                              //             DataCell(
+                              //               Column(
+                              //                 crossAxisAlignment:
+                              //                     CrossAxisAlignment.start,
+                              //                 mainAxisAlignment:
+                              //                     MainAxisAlignment.center,
+                              //                 children:
+                              //                     sideEffects.map((effect) {
+                              //                   return Padding(
+                              //                     padding: const EdgeInsets
+                              //                         .symmetric(vertical: 2.0),
+                              //                     child: Text('• $effect'),
+                              //                   );
+                              //                 }).toList(),
+                              //               ),
+                              //             ),
+                              //           ],
+                              //         );
+                              //       }).toList(),
+                              //     ),
+                              //   ),
+                              // ),
                             ],
                           ),
                         ),

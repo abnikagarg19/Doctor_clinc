@@ -1,5 +1,8 @@
 import 'package:chatbot/controller/signupController.dart';
+import 'package:chatbot/utils/custom_print.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:get/get_state_manager/src/simple/get_state.dart';
 import 'package:intl/intl.dart';
 
 import '../../../components/dropdown.dart';
@@ -11,6 +14,7 @@ class PersonalForm extends StatelessWidget {
     super.key,
     required this.controller,
   });
+
   final SignUpController controller;
 
   @override
@@ -28,7 +32,6 @@ class PersonalForm extends StatelessWidget {
               validation: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Required';
-                  // }
                 }
                 return null;
               },
@@ -57,17 +60,14 @@ class PersonalForm extends StatelessWidget {
                   firstDate: DateTime(1947),
                   lastDate: DateTime(2030),
                 );
-
                 if (pickedDate != null) {
-                  print(pickedDate);
-                  String formattedDate = DateFormat(
-                    'dd/MMM/yyyy',
-                  ).format(pickedDate);
-                  print(formattedDate);
-                  controller.dobController.text =
-                      formattedDate; //set output date to TextField value.
+                  warningPrint("pickedDate $pickedDate");
+                  controller.selectedDOB = pickedDate;
+                  String formattedDateForDisplay =
+                      DateFormat('dd/MMM/yyyy').format(pickedDate);
+                  controller.dobController.text = formattedDateForDisplay;
                 } else {
-                  print("end from date is not selected");
+                  alertPrint("end from date is not selected");
                 }
               },
               hintText: 'dd/MMM/yyyy',
@@ -79,33 +79,35 @@ class PersonalForm extends StatelessWidget {
           SizedBox(
             height: 8,
           ),
-          ReusableDropdown(
-            /// items: controller.genderOptions,
-            listmap: controller.genderOptions,
-
-            selectedItem: "",
-            onChanged: (newValue) {
-              // setState(() {
-              // controller.selectedValue = newValue!;
-              // });
-            },
-            //  validation: (value) {
-            //       if (value == null || value.isEmpty) {
-            //         return 'Required';
-            //       }
-            //       return null;
-            //     },
-            hintText: 'Choose One',
-          ),
+          GetBuilder<SignUpController>(builder: (cntrl) {
+            return ReusableDropdown(
+              listmap: cntrl.genderOptions,
+              selectedItem: cntrl.gender,
+              onChanged: (newValue) {
+                if (newValue != null) {
+                  cntrl.gender = newValue;
+                  cntrl.update();
+                }
+              },
+              validation: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Required';
+                }
+                return null;
+              },
+              hintText: 'Choose One',
+            );
+          }),
           SizedBox(
             height: 20,
           ),
-          buildLable(context, "Mobile Number (with OTP verification)"),
+          buildLable(context, "Mobile Number"),
           SizedBox(
             height: 8,
           ),
           MyTextField(
               textEditingController: controller.mobileController,
+              inputFormatters: [LengthLimitingTextInputFormatter(10)],
               validation: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Required';
@@ -124,18 +126,23 @@ class PersonalForm extends StatelessWidget {
           ),
           MyTextField(
               textEditingController: controller.emergencyContactController,
-              // validation: (value) {
-              //   if (value == null || value.isEmpty) {
-              //     return 'Required';
-              //   }
-              //   return null;
-              // },
+              inputFormatters: [LengthLimitingTextInputFormatter(10)],
               hintText: 'Enter your number',
+              textInputType: TextInputType.phone,
+              validation: (value) {
+                // Regex for a valid Indian mobile number
+                String pattern = r'^[6-9]\d{9}$';
+                RegExp regExp = RegExp(pattern);
+                if (!regExp.hasMatch(value)) {
+                  return 'Please enter a valid mobile number';
+                }
+                return null;
+              },
               color: const Color(0xff585A60)),
           SizedBox(
             height: 20,
           ),
-          buildLable(context, "Email Address (with OTP verification)"),
+          buildLable(context, "Email Address"),
           SizedBox(
             height: 8,
           ),
@@ -144,6 +151,9 @@ class PersonalForm extends StatelessWidget {
               validation: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Required';
+                }
+                if (!value.contains('@')) {
+                  return "@ is required";
                 }
                 return null;
               },

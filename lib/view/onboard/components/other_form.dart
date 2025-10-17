@@ -1,5 +1,6 @@
 import 'package:chatbot/controller/signupController.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get_utils/src/get_utils/get_utils.dart';
 
 import '../../../components/input_field.dart' show MyTextField;
 import 'label_common.dart';
@@ -24,8 +25,10 @@ class OtherForm extends StatelessWidget {
           MyTextField(
               textEditingController: controller.linkedinController,
               validation: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Required';
+                if (value != null &&
+                    value.isNotEmpty &&
+                    !GetUtils.isURL(value)) {
+                  return 'Please enter a valid URL';
                 }
                 return null;
               },
@@ -42,8 +45,10 @@ class OtherForm extends StatelessWidget {
           MyTextField(
               textEditingController: controller.profWebsiteController,
               validation: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Required';
+                if (value != null &&
+                    value.isNotEmpty &&
+                    !GetUtils.isURL(value)) {
+                  return 'Please enter a valid URL';
                 }
                 return null;
               },

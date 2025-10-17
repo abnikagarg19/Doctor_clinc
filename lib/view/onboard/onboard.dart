@@ -222,7 +222,7 @@ class OnboardPage extends StatelessWidget {
           controller: _controller,
         );
       case 1:
-        return ProfesstionalForm(
+        return ProfessionalForm(
           controller: _controller,
         );
       case 2:

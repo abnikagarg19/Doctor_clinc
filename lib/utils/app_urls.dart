@@ -27,13 +27,19 @@ class AppUrls {
   static const String createBreath = "/api/v1/breath/create_breath/";
   static const String createRage = "/api/v1/rage/create_rage/";
   static const String profile = "/api/v1/user/update_user/";
-  static const String onboard = "/api/v1/user/onboarding/";
+  static const String onboard = "/api/v1/doctor/onboarding/complete_flow";
   static const String aaudioFile = "/api/v1/ai/voice_breathing/";
   static const String create_meeting = "/api/v1/meetings/create_user/";
   static const String get_meeting = "/api/v1/dashboard/get_all_meeting";
   static const String sendMessage = "/api/v1/doctor_chat/sendMessage";
   static const String contactList = "/api/v1/doctor_chat/doctor/contact_list";
   static const String chatHistory = "/api/v1/doctor_chat/chat/history";
+
+  /// Sending audio
+  static const String audioSendingSocket =
+      "wss://api.carepal.in/api/v1/voice_agent/ws";
+  static const String doctorChatSocket =
+      "wss://api.carepal.in/api/v1/doctor_chat/ws";
 
   // Optional: Presigned AWS IoT WebSocket URL for Flutter web MQTT connections
   // Leave empty to use default endpoint (will fail without SigV4)

@@ -53,7 +53,8 @@ class ExperienceForm extends StatelessWidget {
           SizedBox(
             height: 20,
           ),
-          buildLable(context, "Sub-specializations (if any)"),
+          buildLable(context, "Sub-specializations (if any)",
+              isRequired: false),
           SizedBox(
             height: 8,
           ),
@@ -69,7 +70,7 @@ class ExperienceForm extends StatelessWidget {
             height: 8,
           ),
           MyTextField(
-              textEditingController: controller.emergencyContactController,
+              textEditingController: controller.previousCompanyController,
               validation: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Required';

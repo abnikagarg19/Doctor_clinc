@@ -35,6 +35,8 @@ class _DashboardState extends State<Dashboard> {
   String date = "";
   late List<_ChartData> data;
   late TooltipBehavior _tooltip;
+  final List<String> _filterOptions = ['All', 'Follow up', 'Completed'];
+  String _selectedFilter = 'All'; // Default value
 
   @override
   void initState() {
@@ -66,7 +68,7 @@ class _DashboardState extends State<Dashboard> {
     final String formattedTime = DateFormat('HH:MM').format(dateTime);
     final String formattedDate = DateFormat('dd-MMM-yy').format(dateTime);
     List<DateTime> dates = getNext7Days();
-
+    final userName = PreferenceUtils.getString("name") ?? "No Name";
     return GetBuilder<Doctorcontroller>(builder: (controller) {
       return Expanded(
         /// constraints: BoxConstraints(maxWidth: 500, minWidth: 400),
@@ -78,7 +80,8 @@ class _DashboardState extends State<Dashboard> {
                 SizedBox(
                   height: 20,
                 ),
-                Text("Good Morning, Dr ${PreferenceUtils.getString("name")}",
+                Text(
+                    "Good Morning, Dr ${userName.isEmpty ? "No Name" : userName}",
                     style: GoogleFonts.rubik(
                       color: AppTheme.blackColor,
                       fontSize: Constant.foutyHeight(context),
@@ -159,7 +162,7 @@ class _DashboardState extends State<Dashboard> {
                                     ),
                                   ],
                                 ),
-                                Text("150",
+                                Text("10",
                                     style: GoogleFonts.rubik(
                                       color: AppTheme.lightPrimaryColor,
                                       fontSize: Constant.sixtyeight(context),
@@ -182,14 +185,14 @@ class _DashboardState extends State<Dashboard> {
                                                 241, 249, 255, 1)),
                                         child: Column(
                                           children: [
-                                            Text("Completed",
+                                            Text("Pending",
                                                 style: GoogleFonts.rubik(
                                                   color: AppTheme.blackColor,
                                                   fontSize: Constant.smallbody(
                                                       context),
                                                   fontWeight: FontWeight.w400,
                                                 )),
-                                            Text("50",
+                                            Text("5",
                                                 style: GoogleFonts.rubik(
                                                   color: AppTheme
                                                       .lightPrimaryColor,
@@ -223,7 +226,7 @@ class _DashboardState extends State<Dashboard> {
                                                       context),
                                                   fontWeight: FontWeight.w400,
                                                 )),
-                                            Text("50",
+                                            Text("3",
                                                 style: GoogleFonts.rubik(
                                                   color: AppTheme
                                                       .lightPrimaryColor,
@@ -250,7 +253,7 @@ class _DashboardState extends State<Dashboard> {
                                                 241, 249, 255, 1)),
                                         child: Column(
                                           children: [
-                                            Text("Completed",
+                                            Text("Cancelled",
                                                 style: GoogleFonts.rubik(
                                                   color: AppTheme.blackColor,
                                                   fontSize: Constant.smallbody(
@@ -258,7 +261,7 @@ class _DashboardState extends State<Dashboard> {
                                                   height: 0,
                                                   fontWeight: FontWeight.w400,
                                                 )),
-                                            Text("50",
+                                            Text("2",
                                                 style: GoogleFonts.rubik(
                                                   color: AppTheme
                                                       .lightPrimaryColor,
@@ -305,45 +308,48 @@ class _DashboardState extends State<Dashboard> {
                                                   context),
                                               fontWeight: FontWeight.w600,
                                             )),
-                                        GestureDetector(
-                                            onTap: () async {
-                                              DateTime? pickedDate =
-                                                  await showDatePicker(
-                                                context: context,
-                                                initialDate: DateTime.now(),
-                                                firstDate: DateTime(1947),
-                                                lastDate: DateTime(2030),
-                                              );
-
-                                              if (pickedDate != null) {
-                                                print(pickedDate);
-                                                String formattedDate =
-                                                    DateFormat(
-                                                  'yyyy-MM-dd',
-                                                ).format(pickedDate);
-                                                controller.changeSelectDate(
-                                                    formattedDate);
-                                                print(formattedDate);
-                                              } else {
-                                                print(
-                                                    "end from date is not selected");
-                                              }
-                                            },
-                                            child: Row(
-                                              children: [
-                                                Text(
-                                                  "${controller.selectedDate} ",
-                                                  style: TextStyle(
-                                                      color: Color.fromRGBO(
-                                                          142, 142, 142, 1)),
-                                                ),
-                                                Icon(
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 12.0),
+                                          height: 40,
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(8.0),
+                                            border: Border.all(
+                                                color: Colors.grey.shade300,
+                                                width: 1),
+                                          ),
+                                          child: DropdownButtonHideUnderline(
+                                            child: DropdownButton<String>(
+                                              value: _selectedFilter,
+                                              dropdownColor: Colors.white,
+                                              icon: const Icon(
                                                   Icons.keyboard_arrow_down,
                                                   color: Color.fromRGBO(
-                                                      142, 142, 142, 1),
-                                                )
-                                              ],
-                                            ))
+                                                      142, 142, 142, 1)),
+                                              items: _filterOptions.map<
+                                                      DropdownMenuItem<String>>(
+                                                  (String value) {
+                                                return DropdownMenuItem<String>(
+                                                  value: value,
+                                                  child: Text(
+                                                    value,
+                                                    style: const TextStyle(
+                                                        color: Color.fromRGBO(
+                                                            142, 142, 142, 1)),
+                                                  ),
+                                                );
+                                              }).toList(),
+                                              onChanged: (String? newValue) {
+                                                setState(() {
+                                                  if (newValue != null) {
+                                                    _selectedFilter = newValue;
+                                                  }
+                                                });
+                                              },
+                                            ),
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -804,6 +810,52 @@ class _DashboardState extends State<Dashboard> {
               ]),
       );
     });
+  }
+
+  Widget filterDropDown() {
+    final List<String> _filterOptions = ['All', 'Follow up', 'Completed'];
+    String _selectedFilter = 'All';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8.0),
+        border: Border.all(color: Colors.grey.shade300, width: 1),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          // 3. The value that is currently selected.
+          value: _selectedFilter,
+
+          // The dropdown arrow icon
+          icon: const Icon(Icons.keyboard_arrow_down,
+              color: Color.fromRGBO(142, 142, 142, 1)),
+
+          // 4. The callback that runs when the user selects a new item.
+          onChanged: (String? newValue) {
+            // Update the state with the new selection.
+            setState(() {
+              if (newValue != null) {
+                _selectedFilter = newValue;
+                // You can add any filtering logic here, for example:
+                // print("Filter changed to: $_selectedFilter");
+                // controller.applyFilter(_selectedFilter);
+              }
+            });
+          },
+
+          // 5. Mapping your list of strings to a list of DropdownMenuItem widgets.
+          items: _filterOptions.map<DropdownMenuItem<String>>((String value) {
+            return DropdownMenuItem<String>(
+              value: value,
+              child: Text(
+                value,
+                style: const TextStyle(color: Color.fromRGBO(142, 142, 142, 1)),
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
   }
 }
 

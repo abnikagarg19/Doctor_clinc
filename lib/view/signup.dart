@@ -2,6 +2,7 @@ import 'package:chatbot/controller/signupController.dart';
 import 'package:chatbot/responsive.dart';
 import 'package:chatbot/utils/constant.dart';
 import 'package:chatbot/utils/social_logins.dart';
+import 'package:chatbot/view/login.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
@@ -44,7 +45,7 @@ class SignUpPage extends StatelessWidget {
   }
 
   _buildLoginWidget(context, width) {
-    return GetBuilder<SignUpController>(builder: (_controller) {
+    return GetBuilder<SignUpController>(builder: (controller) {
       return LayoutBuilder(
           // If our width is more than 1100 then we consider it a desktop
           builder: (context, constraints) {
@@ -98,7 +99,8 @@ class SignUpPage extends StatelessWidget {
                                 height: 30,
                               ),
                               MyTextField(
-                                  textEditingController: _controller.email,
+                                  textEditingController:
+                                      controller.emailController,
                                   validation: (value) {
                                     RegExp emailValidatorRegExp = RegExp(
                                         r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$');
@@ -125,11 +127,11 @@ class SignUpPage extends StatelessWidget {
                               ),
                               MyTextField(
                                   isSuffixIcon: true,
-                                  textEditingController: _controller.password,
+                                  textEditingController: controller.password,
                                   obsecureText:
-                                      !_controller.passwordLoginVisibility,
+                                      !controller.passwordLoginVisibility,
                                   ontapSuffix: () {
-                                    _controller.showPassword();
+                                    controller.showPassword();
                                   },
                                   validation: (value) {
                                     if (value == null || value.isEmpty) {
@@ -153,18 +155,18 @@ class SignUpPage extends StatelessWidget {
                               MyTextField(
                                   isSuffixIcon: true,
                                   textEditingController:
-                                      _controller.confirmpassword,
+                                      controller.confirmpassword,
                                   obsecureText:
-                                      !_controller.passwordLoginVisibility2,
+                                      !controller.passwordLoginVisibility2,
                                   ontapSuffix: () {
-                                    _controller.showPassword2();
+                                    controller.showPassword2();
                                   },
                                   validation: (value) {
                                     if (value == null || value.isEmpty) {
                                       return 'Required';
                                     }
-                                    if (_controller.password.text !=
-                                        _controller.confirmpassword.text) {
+                                    if (controller.password.text !=
+                                        controller.confirmpassword.text) {
                                       return 'Passwords do not match';
                                     }
                                     return null;
@@ -248,8 +250,7 @@ class SignUpPage extends StatelessWidget {
                                     tap: () {
                                       if (loginformKey.currentState!
                                           .validate()) {
-                                        _controller
-                                            .sendOtp(_controller.email.text);
+                                        controller.signUp();
                                       } else {
                                         DialogHelper.showErroDialog();
                                       }
@@ -325,7 +326,7 @@ class SignUpPage extends StatelessWidget {
                             children: <TextSpan>[
                               TextSpan(
                                   recognizer: TapGestureRecognizer()
-                                    ..onTap = () => Get.back(),
+                                    ..onTap = () => Get.to(() => Login()),
                                   text: ' Login',
                                   style: TextStyle(
                                       fontSize: Constant.smallbody(context),

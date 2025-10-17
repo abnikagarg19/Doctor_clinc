@@ -27,43 +27,85 @@ class AuthController extends GetxController {
   final service = AuthService();
   final RxMap<String, dynamic> userProfile = RxMap<String, dynamic>();
 
-  login() {
-    DialogHelper.showLoading();
-    service.apiLoginService(email.text, password.text).then((value) {
-      alertPrint("Status Code ${value.statusCode}");
-      DialogHelper.hideLoading();
-      switch (value.statusCode) {
-        case 200:
-          var data2 = jsonDecode(value.body);
-          successPrint(value.body);
+  // You can replace your existing login() function with this one.
 
-          //var data2 = jsonDecode(value.data);
-          if (data2["status"]) {
-            userProfile.value = data2['data'];
-            PreferenceUtils.setString("email", email.text.toString());
-            PreferenceUtils.setString(
-                "id", data2["data"]["user_id"].toString());
-            PreferenceUtils.setString("name", data2["data"]["name"].toString());
-            PreferenceUtils.saveUserToken(data2["access_token"].toString());
-            Get.toNamed(Routes.HOME);
-          } else {
+  Future<void> login() async {
+    DialogHelper.showLoading();
+
+    try {
+      final response = await service.apiLoginService(email.text, password.text);
+
+      switch (response.statusCode) {
+        case 200:
+          // Use a nested try-catch for parsing the success response
+          try {
+            var data2 = jsonDecode(response.body);
+            successPrint("Response Login : ${response.body}");
+
+            // Safely check the status
+            if (data2["status"] == true) {
+              final userData = data2['data'];
+
+              // Safely get all the required data
+              final String userId = userData?['user_id']?.toString() ?? '';
+              final String userName = userData?['name']?.toString() ?? '';
+              final String accessToken =
+                  data2['access_token']?.toString() ?? '';
+
+              // CRITICAL: Check if the token was actually received
+              if (accessToken.isNotEmpty) {
+                userProfile.value = userData ?? {};
+
+                // Save all data to local storage
+                await PreferenceUtils.setString("email", email.text.toString());
+                await PreferenceUtils.setString("id", userId);
+                await PreferenceUtils.setString("name", userName);
+                await PreferenceUtils.saveUserToken(accessToken);
+
+                warningPrint(
+                    "Login successful. Token saved: ${PreferenceUtils.getUserToken()}");
+                Get.offAllNamed(
+                    Routes.HOME); // Use offAllNamed to clear login stack
+              } else {
+                // Handle case where 200 OK but token is missing
+                DialogHelper.showErroDialog(
+                    description: "Authentication failed: Missing token.");
+              }
+            } else {
+              DialogHelper.showErroDialog(
+                  description: data2["message"]?.toString() ?? "Login failed.");
+            }
+          } on FormatException catch (e) {
+            // This catches errors if the 200 response body is not valid JSON
+            errorPrint("Error parsing success response: $e");
             DialogHelper.showErroDialog(
-                description: data2["message"].toString());
+                description: "Received an invalid response from the server.");
           }
           break;
-        case 404:
-          var data2 = jsonDecode(value.body);
-          DialogHelper.showErroDialog(description: data2["message"].toString());
 
-          break;
-        case 1:
-          break;
-        default:
-          var data2 = jsonDecode(value.body);
-          DialogHelper.showErroDialog(description: data2["message"].toString());
+        case 404:
+        default: // Combines 404 and other error codes
+
+          try {
+            var data2 = jsonDecode(response.body);
+            DialogHelper.showErroDialog(
+                description: data2["message"]?.toString() ??
+                    "An unknown error occurred.");
+          } on FormatException {
+            DialogHelper.showErroDialog(
+                description:
+                    "An unknown error occurred. (Status code: ${response.statusCode})");
+          }
           break;
       }
-    });
+    } catch (e) {
+      // This is the final safety net for any other unexpected errors
+      errorPrint("An unexpected error occurred in login: $e");
+      DialogHelper.showErroDialog(description: "An unexpected error occurred.");
+    } finally {
+      // This block ALWAYS runs, ensuring the dialog is always hidden.
+      DialogHelper.hideLoading();
+    }
   }
 
   void submitForgetPassword() {

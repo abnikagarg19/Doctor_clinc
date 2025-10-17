@@ -9,21 +9,15 @@ import '../components/button.dart';
 import '../theme/apptheme.dart';
 
 class OtpPage extends StatelessWidget {
-  OtpPage({
-    super.key,
-    required this.emailid,
-    required this.email,
-  });
-
-  final String emailid;
-  final String email;
+  final String emailId;
+  OtpPage({super.key, required this.emailId});
 
   final loginformKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: GetBuilder<SignUpController>(builder: (_controller) {
+      body: GetBuilder<SignUpController>(builder: (cntrl) {
         return Stack(
           children: [
             Container(
@@ -63,7 +57,7 @@ class OtpPage extends StatelessWidget {
                   ),
                   image: DecorationImage(
                       image: AssetImage(
-                        "assets/images/a1.png",
+                        "assets/images/otpIcon.png",
                       ),
                       scale: 1.8)),
             ),
@@ -95,7 +89,7 @@ class OtpPage extends StatelessWidget {
                     ),
 
                     Image.asset(
-                      "assets/images/a1.png",
+                      "assets/images/otpIcon.png",
                       height: 90,
                     ),
 
@@ -117,7 +111,7 @@ class OtpPage extends StatelessWidget {
                               height: 4,
                             ),
                             Text(
-                              "Enter the OTP that we sent to your registered email ($email)",
+                              "Enter the OTP that we sent to your registered email ${cntrl.emailController.text}",
                               style: GoogleFonts.roboto(
                                 color: AppTheme.hintTextColor,
                                 fontSize: 13,
@@ -128,11 +122,11 @@ class OtpPage extends StatelessWidget {
                             SizedBox(height: 20),
                             Center(
                               child: Pinput(
-                                controller: _controller.pinController,
+                                controller: cntrl.otpController,
                                 length: 6,
                                 autofocus: true,
                                 forceErrorState: true,
-                                onCompleted: (pin) => print(pin),
+                                onCompleted: (pin) => alertPrint("pin $pin"),
                                 defaultPinTheme: PinTheme(
                                   width: 38,
                                   height: 38,
@@ -159,12 +153,10 @@ class OtpPage extends StatelessWidget {
                                   tittle: "Continue",
                                   tap: () async {
                                     if (loginformKey.currentState!.validate()) {
-                                      await _controller.verifyOtp(
-                                          _controller.pinController.text,
-                                          emailid);
+                                      await cntrl.verifyOtp(
+                                          cntrl.otpController.text, emailId);
                                       alertPrint(
-                                          "Verified otp and user signed in successfully on button continue on verify otp page");
-                                      _controller.signUp();
+                                          "Verified otp and user signed in successfully on button continue on verify otp page ${cntrl.otpController.text} & ${emailId}");
                                     }
                                   }),
                             ),
@@ -184,7 +176,8 @@ class OtpPage extends StatelessWidget {
                             )),
                         GestureDetector(
                             onTap: () {
-                              _controller.otpResendValidSubmit(email);
+                              cntrl.otpResendValidSubmit(
+                                  cntrl.emailController.text);
                             },
                             child: Text(' Resend',
                                 style: GoogleFonts.roboto(

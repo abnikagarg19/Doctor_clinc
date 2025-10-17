@@ -51,8 +51,8 @@ final Map<String, Offset> bodyPartCoordinates = {
 final String mockSymptomJsonPayload = """
 [
   {
-    "body_part": "left hip",
-    "severity": "moderate",
+    "body_part": "right hip",
+    "severity": "high",
     "description": "Patient reports a persistent, moderate left hip."
   },
   {

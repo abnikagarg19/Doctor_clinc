@@ -48,7 +48,7 @@ class SymptomPainter extends CustomPainter {
 
       final absolutePosition = Offset(absoluteX, absoluteY);
 
-      canvas.drawCircle(absolutePosition, 8.0, paint);
+      canvas.drawCircle(absolutePosition, 15.0, paint);
     }
   }
 

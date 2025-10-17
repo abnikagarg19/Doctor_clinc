@@ -2,9 +2,7 @@ import 'package:chatbot/bindings.dart/init.dart';
 import 'package:chatbot/bindings.dart/loginBindings.dart';
 import 'package:chatbot/videocall/join_screen.dart';
 import 'package:chatbot/view/components/side_menu.dart';
-import 'package:chatbot/view/home.dart';
 import 'package:chatbot/view/login.dart';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../bindings.dart/signupBindings.dart';
@@ -53,10 +51,10 @@ class AppPages {
           return const SplashScreen();
         },
         binding: InitBindings()),
-        GetPage(
+    GetPage(
         name: Routes.HOME,
         page: () {
-          return  SideMenu();
+          return SideMenu();
         },
         binding: InitBindings()),
     GetPage(
