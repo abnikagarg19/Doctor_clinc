@@ -26,7 +26,6 @@ class _OfflineConsultationState extends State<OfflineConsultation>
   ///
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
-  bool _isAiSpeaking = false;
 
   ///zoom body image
   late TransformationController _transformationController;
@@ -59,16 +58,17 @@ class _OfflineConsultationState extends State<OfflineConsultation>
   String doctor_impression_and_diagnosis = "";
   double _currentScale = 1.0;
 
+  final controller = ChatController();
   void startAnimation() {
     setState(() {
-      _isAiSpeaking = true;
+      controller.isAiSpeaking.value = true;
     });
     _animationController.repeat(reverse: true);
   }
 
   void stopAiAnimation() {
     setState(() {
-      _isAiSpeaking = false;
+      controller.isAiSpeaking.value = false;
     });
     _animationController.stop();
     _animationController.reset();
@@ -298,10 +298,11 @@ class _OfflineConsultationState extends State<OfflineConsultation>
                         GestureDetector(
                           onTap: () async {
                             setState(() {
-                              _isAiSpeaking = !_isAiSpeaking;
+                              controller.isAiSpeaking.value =
+                                  !controller.isAiSpeaking.value;
                             });
 
-                            if (_isAiSpeaking) {
+                            if (controller.isAiSpeaking.value) {
                               startAnimation();
                               chatController.startVoiceSession();
                             } else {

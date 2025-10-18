@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
+import '../models/patient_modal.dart';
 import '../view/videocall/components/symptoms_modal.dart';
 import '../view/videocall/components/trained_mock_positions.dart';
 
@@ -18,9 +19,7 @@ class Doctorcontroller extends GetxController {
     getMeeting();
     loadImage();
     updateSymptomsFromJson(mockSymptomJsonPayload);
-
-    // update();
-    //print(parameters["pageIndex"]);
+    applyFilter();
   }
 
   @override
@@ -37,7 +36,117 @@ class Doctorcontroller extends GetxController {
 
   String selectedDate = DateFormat("yyyy-MM-dd").format(DateTime.now());
   List appointmentList = [];
-  bool isLoaded = false;
+  List appointmentListMock = [
+    {
+      "meeting": [
+        {
+          "meeting_id_front": "MTG001",
+          "patient_name": "John Smith",
+          "from_time": "10:30 AM",
+          "description": "Weekly visit",
+          "status": "confirmed",
+          "is_online": true
+        },
+        {
+          "meeting_id_front": "MTG002",
+          "patient_name": "Sarah Johnson",
+          "from_time": "11:45 AM",
+          "description": "Follow-up consultation",
+          "status": "confirmed",
+          "is_online": false
+        },
+        {
+          "meeting_id_front": "MTG003",
+          "patient_name": "Michael Brown",
+          "from_time": "02:15 PM",
+          "description": "Initial diagnosis",
+          "status": "completed",
+          "is_online": true
+        },
+        {
+          "meeting_id_front": "MTG004",
+          "patient_name": "Emily Davis",
+          "from_time": "03:30 PM",
+          "description": "Routine checkup",
+          "status": "confirmed",
+          "is_online": true
+        },
+        {
+          "meeting_id_front": "MTG005",
+          "patient_name": "Robert Wilson",
+          "from_time": "04:45 PM",
+          "description": "Therapy session",
+          "status": "cancelled",
+          "is_online": false
+        }
+      ]
+    }
+  ];
+  bool isLoaded = true;
+  final appointmentLoading = false.obs;
+  List<Map<String, dynamic>> filteredAppointments = [];
+  final List<String> filterOptions = ['All', 'Follow up', 'New Patient'];
+  String selectedFilter = 'All';
+
+  ///filter the appointment
+
+  void applyFilter() {
+    appointmentLoading.value = false;
+    if (appointmentListMock.isEmpty ||
+        appointmentListMock[0]['meeting'] == null) {
+      filteredAppointments = [];
+      update();
+      return;
+    }
+
+    final allAppointments = appointmentListMock[0]['meeting'] as List;
+
+    if (selectedFilter == 'All') {
+      filteredAppointments = List<Map<String, dynamic>>.from(allAppointments);
+      appointmentLoading.value = true;
+    } else {
+      filteredAppointments = allAppointments
+          .where((appointment) {
+            // We'll filter by the 'tag' in your data to match the dropdown options
+            final String tag = appointment['tag']?.toString() ?? '';
+            return tag == selectedFilter;
+          })
+          .map((item) => item as Map<String, dynamic>)
+          .toList();
+    }
+    appointmentLoading.value = true;
+    update();
+  }
+
+  void changeFilter(String? newFilter) {
+    if (newFilter != null) {
+      selectedFilter = newFilter;
+      applyFilter();
+    }
+  }
+
+  /// Patient list on dashboard
+  final List<PatientGridItem> patientGridData = [
+    PatientGridItem(
+        name: "John Doe",
+        symptom: "Fever, Cough",
+        messageCount: 3,
+        progressLevel: 'critical',
+        condition: ''),
+    PatientGridItem(
+        name: "Jane Smith",
+        symptom: "Headache",
+        messageCount: 0,
+        progressLevel: 'improving',
+        condition: ''),
+    PatientGridItem(
+        name: "Snow Smith",
+        symptom: "last visit",
+        messageCount: 1,
+        progressLevel: 'moderate',
+        condition: 'condition'),
+  ];
+
   void getMeeting() async {
     appointmentList.clear();
     HomeService().apiGetMeeting(selectedDate).then((value) {

@@ -19,7 +19,8 @@ import '../service/voice_agent.dart';
 import '../utils/app_urls.dart';
 import '../view/chat/service/chat_service.dart' show ChatWebSocketService;
 
-class ChatController extends GetxController {
+class ChatController extends GetxController
+    with GetSingleTickerProviderStateMixin {
   @override
   void onInit() {
     super.onInit();
@@ -30,7 +31,23 @@ class ChatController extends GetxController {
       // Listen to the correct list
       _scrollToBottom();
     });
+    slideController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 2), // Start off-screen (bottom)
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: slideController, curve: Curves.easeOut));
   }
+
+  var isVoiceAgentVisible = false.obs;
+  var isVoiceAgentMinimized = true.obs;
+  var voiceAgentTranscript = ''.obs;
+
+  // Animation controller for smooth transitions
+  late AnimationController slideController;
+  late Animation<Offset> slideAnimation;
 
   final ChatService _chatService = ChatService();
 
@@ -42,6 +59,8 @@ class ChatController extends GetxController {
   final scrollController = ScrollController();
   ChatWebSocketService? _ws;
   final chatcontroller = TextEditingController();
+  var isChatPopupVisible = false.obs;
+  var isChatPopupMinimized = false.obs;
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -163,6 +182,7 @@ class ChatController extends GetxController {
 
   /// Fetch patient list
   Future<void> loadPatients() async {
+    alertPrint("Loading Patient Start");
     isLoading.value = true;
     errorMessage.value = '';
     try {
@@ -170,7 +190,7 @@ class ChatController extends GetxController {
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
         patients.value = decoded ?? [];
-        print(decoded);
+        successPrint("Patient Data Loaded $decoded");
         if (patients.isNotEmpty) {
           selectedPatient.value = patients.first;
           final patientId = selectedPatient.value!["user_id"].toString();
@@ -181,14 +201,13 @@ class ChatController extends GetxController {
       }
     } catch (e) {
       errorMessage.value = "Error: $e";
-      print(errorMessage);
+      errorPrint("Error $errorMessage");
     } finally {
       isLoading.value = false;
     }
   }
 
   ///download pdf
-
   Future<File> generateChatPdf(List<Map<String, dynamic>> chatMessages) async {
     final ttf = await rootBundle.load("assets/font/SWItal Regular.ttf");
     final font = pw.Font.ttf(ttf);
@@ -298,13 +317,22 @@ class ChatController extends GetxController {
   /// Patient and doctor Audio Streaming
   final _vadHandler = VadHandler.create(isDebug: true);
   VoiceAgentService? _voiceAgentService;
+  final isAiSpeaking = false.obs;
+
   // final stt.SpeechToText _speechToText = stt.SpeechToText();
   // late Function(String) _onResultCallback;
   // bool isCurrentBubbleActive = false;
   final chatMessage = <Map<String, dynamic>>[].obs;
   String activeSpeaker = "doctor";
 
+  void toggleVoiceAgentMinimize() {
+    isVoiceAgentMinimized.toggle();
+  }
+
   Future<void> startVoiceSession() async {
+    slideController.reverse().whenComplete(() {
+      isVoiceAgentVisible.value = false;
+    });
     alertPrint("Voice Session Starting...");
     chatMessage.clear();
     var status = await Permission.microphone.request();
@@ -314,11 +342,12 @@ class ChatController extends GetxController {
     }
     var url = Uri.parse(AppUrls.audioSendingSocket);
 
-    // 1. Initialize and connect the Voice WebSocket
+    /// 1. Initialize and connect the Voice WebSocket
     _voiceAgentService =
         VoiceAgentService(url: "$url", token: PreferenceUtils.getUserToken());
     await _voiceAgentService!.connect();
-    // 2. Listen for text responses from the WebSocket
+
+    /// 2. Listen for text responses from the WebSocket
     _voiceAgentService!.messageStream.listen((textResponse) {
       chatMessage.add({
         "sender": "patient",
@@ -330,16 +359,19 @@ class ChatController extends GetxController {
       errorPrint("Voice agent WebSocket error: $error");
     });
 
-    // 3. Configure VAD to send audio when speech is detected
+    /// 3. Configure VAD to send audio when speech is detected
     _vadHandler.onSpeechEnd.listen((List<double> samples) async {
-      alertPrint("VAD: Speech ended, converting and sending audio.");
+      alertPrint(
+          "VAD: Speech ended, processing ${samples.length} audio samples.");
       final wavBytes = await _saveSamplesAsWavBytes(samples);
       _voiceAgentService?.sendAudio(wavBytes);
       successPrint("Sending audio when speech $_voiceAgentService");
     });
 
     // 4. Start listening with VAD
+    alertPrint("VAD: Attempting to start microphone...");
     await _vadHandler.startListening(submitUserSpeechOnPause: true);
+    successPrint("VAD: Microphone is now active and recording!");
     alertPrint("Voice session started. Listening for speech...");
   }
 
@@ -391,6 +423,7 @@ class ChatController extends GetxController {
     _ws?.close();
     scrollController.dispose();
     chatcontroller.dispose();
+    slideController.dispose();
     super.onClose();
     // _speechToText.cancel(); // Us
   }

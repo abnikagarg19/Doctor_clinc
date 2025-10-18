@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:chatbot/utils/app_routes.dart';
 import 'package:chatbot/view/chat/chat_view.dart';
 import 'package:flutter/material.dart';
@@ -9,18 +11,139 @@ import '../../responsive.dart';
 import '../home/dashboard.dart';
 import '../setting/setting.dart';
 import '../videocall/offline_consulation.dart';
+import 'global_voce_agent_popUp.dart';
 
 class SideMenu extends StatefulWidget {
   SideMenu({super.key});
 
   @override
-  State<SideMenu> createState() => _DashboardState();
+  State<SideMenu> createState() => _SideMenuState();
 }
 
-class _DashboardState extends State<SideMenu> {
+class _SideMenuState extends State<SideMenu>
+    with SingleTickerProviderStateMixin {
+  final chatController = Get.put(ChatController());
+  List dashboardlist = [
+    "assets/svg/dashboard.svg",
+    "assets/svg/calender.svg",
+    "assets/svg/chat.svg",
+    "assets/svg/setting.svg",
+    "assets/svg/logout.svg"
+  ];
+  int selectedIndex = 0;
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
+
+  void startAnimation() {
+    setState(() {
+      chatController.isAiSpeaking.value = true;
+    });
+    _animationController.repeat(reverse: true);
+  }
+
+  void stopAiAnimation() {
+    setState(() {
+      chatController.isAiSpeaking.value = false;
+    });
+    _animationController.stop();
+    _animationController.reset();
+  }
+
+  @override
+  void initState() {
+    _animationController = AnimationController(
+        vsync: this, duration: Duration(milliseconds: 1500));
+
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.15).animate(
+        CurvedAnimation(parent: _animationController, curve: Curves.easeInOut));
+
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton: SizedBox(
+        width: 70.0,
+        height: 70.0,
+        child: GestureDetector(
+          onTap: () async {
+            chatController.isAiSpeaking.toggle();
+
+            if (chatController.isAiSpeaking.value) {
+              startAnimation();
+              chatController.startVoiceSession();
+            } else {
+              stopAiAnimation();
+              chatController.stopVoiceSession();
+            }
+          },
+          child: ScaleTransition(
+              scale: _scaleAnimation,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Transform.scale(
+                    scale: 0.5,
+                    child: ImageFiltered(
+                      imageFilter:
+                          ui.ImageFilter.blur(sigmaX: 50.0, sigmaY: 50.0),
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            colors: [
+                              Color(0xFF00FF87),
+                              Color(0xFF4CA9EE),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Container(
+                    width: 70,
+                    height: 70,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: [
+                          Color(0xFF00FF87),
+                          Color(0xFF4CA9EE),
+                        ],
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.mic,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              )),
+        ),
+      ),
+      // FloatingActionButton(
+      //   onPressed: () {
+      //     setState(() {
+      //       isAiSpeaking = !isAiSpeaking;
+      //     });
+      //     if (isAiSpeaking) {
+      //       chatController.startVoiceSession();
+      //     } else {
+      //       chatController.stopVoiceSession();
+      //     }
+      //   },
+      //   backgroundColor:
+      //       isAiSpeaking ? Colors.red : Theme.of(context).primaryColor,
+      //   child: Icon(isAiSpeaking ? Icons.mic_off : Icons.mic),
+      // ),
       resizeToAvoidBottomInset: false,
       body: ResponsiveLayout(
           desktop:
@@ -31,138 +154,131 @@ class _DashboardState extends State<SideMenu> {
     );
   }
 
-  List dashboardlist = [
-    "assets/svg/dashboard.svg",
-    "assets/svg/calender.svg",
-    "assets/svg/chat.svg",
-    "assets/svg/setting.svg",
-    "assets/svg/logout.svg"
-  ];
-  int selectedIndex = 0;
-  final ChatController controller = Get.put(ChatController());
   _buildWidget(context, width) {
-    return LayoutBuilder(
-        // If our width is more than 1100 then we consider it a desktop
-        builder: (context, constraints) {
-      return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        Stack(
-          alignment: Alignment.center,
-          children: [
-            Image.asset(
-              "assets/images/sidebar_bg.png",
-              height: Get.height / 1.2,
-            ),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              crossAxisAlignment: CrossAxisAlignment.center,
+    return LayoutBuilder(builder: (context, constraints) {
+      return Stack(
+        children: [
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Stack(
+              alignment: Alignment.center,
               children: [
-                SizedBox(
-                  height: 20,
+                Image.asset(
+                  "assets/images/sidebar_bg.png",
+                  height: Get.height / 1.2,
                 ),
-                ...List.generate(
-                  dashboardlist.length,
-                  (index) {
-                    return GestureDetector(
-                        onTap: () {
-                          selectedIndex = index;
-                          setState(() {});
-                          if (index == 2) {
-                            controller.loadPatients();
-                          }
-                        },
-                        child: Container(
-                            padding: EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                                color: index == selectedIndex
-                                    ? Color.fromRGBO(255, 255, 255, 0.7)
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(4)),
-                            child: SvgPicture.asset(
-                              dashboardlist[index],
-                              height: 30,
-                            )));
-                  },
-                ),
-                SizedBox(
-                  height: 20,
-                ),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      height: 20,
+                    ),
+                    ...List.generate(
+                      dashboardlist.length,
+                      (index) {
+                        return GestureDetector(
+                            onTap: () {
+                              selectedIndex = index;
+                              setState(() {});
+                              if (index == 2) {
+                                chatController.loadPatients();
+                              }
+                            },
+                            child: Container(
+                                padding: EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                    color: index == selectedIndex
+                                        ? Color.fromRGBO(255, 255, 255, 0.7)
+                                        : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(4)),
+                                child: SvgPicture.asset(
+                                  dashboardlist[index],
+                                  height: 30,
+                                )));
+                      },
+                    ),
+                    SizedBox(
+                      height: 20,
+                    ),
+                  ],
+                )
               ],
-            )
-          ],
-        ),
-        SizedBox(
-          width: 60,
-        ),
-        Expanded(
-          child: Column(children: [
+            ),
             SizedBox(
-              height: 20,
+              width: 60,
             ),
-            Row(
-              children: [
-                /// Search Bar
-                // Expanded(
-                //   child: Container(
-                //     child: search_textbox(
-                //       onsubmit: (String) {},
-                //       hintText: "Search here...",
-                //       onChanged: (String) {},
-                //     ),
-                //   ),
-                // ),
-                ///
-                // SizedBox(width: 16),
-                // ElevatedButton.icon(
-                //   onPressed: () => Get.toNamed('/websocket'),
-                //   icon: Icon(Icons.wifi, color: Colors.white),
-                //   label:
-                //       Text('WebSocket Test', style: TextStyle(color: Colors.white)),
-                //   style: ElevatedButton.styleFrom(
-                //     backgroundColor: Colors.blue,
-                //     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                //   ),
-                // ),
+            Expanded(
+              child: Column(children: [
                 SizedBox(
-                  width: 40,
+                  height: 20,
                 ),
+                Row(
+                  children: [
+                    /// Search Bar
 
-                /// Icon
-                // Expanded(
-                //   child: Row(
-                //     mainAxisAlignment: MainAxisAlignment.end,
-                //     children: [
-                //       Image.asset("assets/images/bell.png"),
-                //       SizedBox(
-                //         width: 40,
-                //       ),
-                //       Image.asset("assets/images/chat copy.png"),
-                //       SizedBox(
-                //         width: 40,
-                //       ),
-                //       Image.asset("assets/images/message.png"),
-                //       SizedBox(
-                //         width: 80,
-                //       ),
-                //       ClipRRect(
-                //           borderRadius: BorderRadius.circular(50),
-                //           child: Image.asset(
-                //             "assets/images/aa.jpg",
-                //             height: 40,
-                //             width: 40,
-                //             fit: BoxFit.cover,
-                //           )),
-                //     ],
-                //   ),
-                // )
-              ],
+                    ///
+                    // SizedBox(width: 16),
+                    // ElevatedButton.icon(
+                    //   onPressed: () => Get.toNamed('/websocket'),
+                    //   icon: Icon(Icons.wifi, color: Colors.white),
+                    //   label:
+                    //       Text('WebSocket Test', style: TextStyle(color: Colors.white)),
+                    //   style: ElevatedButton.styleFrom(
+                    //     backgroundColor: Colors.blue,
+                    //     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    //   ),
+                    // ),
+                    SizedBox(
+                      width: 40,
+                    ),
+
+                    /// Icon
+                    // Expanded(
+                    //   child: Row(
+                    //     mainAxisAlignment: MainAxisAlignment.end,
+                    //     children: [
+                    //       Image.asset("assets/images/bell.png"),
+                    //       SizedBox(
+                    //         width: 40,
+                    //       ),
+                    //       Image.asset("assets/images/chat copy.png"),
+                    //       SizedBox(
+                    //         width: 40,
+                    //       ),
+                    //       Image.asset("assets/images/message.png"),
+                    //       SizedBox(
+                    //         width: 80,
+                    //       ),
+                    //       ClipRRect(
+                    //           borderRadius: BorderRadius.circular(50),
+                    //           child: Image.asset(
+                    //             "assets/images/aa.jpg",
+                    //             height: 40,
+                    //             width: 40,
+                    //             fit: BoxFit.cover,
+                    //           )),
+                    //     ],
+                    //   ),
+                    // )
+                    // Container(
+                    //   child: search_textbox(
+                    //     onsubmit: (String) {},
+                    //     hintText: "Search here...",
+                    //     onChanged: (String) {},
+                    //   ),
+                    // ),
+                  ],
+                ),
+                _buildSwitchPage(context, selectedIndex),
+              ]),
             ),
-            _buildSwitchPage(context, selectedIndex),
+            SizedBox(
+              width: 60,
+            ),
           ]),
-        ),
-        SizedBox(
-          width: 60,
-        ),
-      ]);
+          const GlobalVoiceAgentPopup(),
+        ],
+      );
     });
   }
 

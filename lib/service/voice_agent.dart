@@ -22,13 +22,17 @@ class VoiceAgentService {
       alertPrint('VoiceAgentService: Connecting to Websocket');
       webSocketChannel!.stream.listen(
         (message) {
-          // Add incoming text messages to our stream for the controller to hear
+          /// Add incoming text messages to our stream for the controller to hear
           if (!_connectionCompleter.isCompleted) {
             successPrint(
                 "VoiceAgentService: WebSocket Connected and receiving data.");
             _connectionCompleter.complete();
           }
           alertPrint('VoiceAgentService RCV: $message');
+
+          /// STEP 3: The service takes the message and adds it to its own stream controller.
+          /// This is like a megaphone, broadcasting the message to anyone in the app who is listening.
+
           _responseController.add(message);
         },
         onDone: () {
